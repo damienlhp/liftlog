@@ -8,5 +8,12 @@
 <body>
     <h1>Welcome to LiftLog</h1>
     <p>Track your workouts and crush your PRs.</p>
+
+    <h2>Exercises</h2>
+    <p>Total exercises: {{ exercises | length }}</p>
+
+    {% for exercise in exercises %}
+        <p>{{ exercise.name }} - {{ exercise.muscle_group }}</p>
+    {% endfor %}
 </body>
 </html>
