@@ -9,6 +9,20 @@
     <h1>Welcome to LiftLog</h1>
     <p>Track your workouts and crush your PRs.</p>
 
+    <h2>Add an Exercise</h2>
+    <form action="/add-exercise" method="POST">
+        <input type="text" name="name" placeholder="Exercise name" required>
+        <select name="muscle_group">
+            <option value="Arms">Arms</option>
+            <option value="Back">Back</option>
+            <option value="Chest">Chest</option>
+            <option value="Core">Core</option>
+            <option value="Legs">Legs</option>
+            <option value="Shoulders">Shoulders</option>
+        </select>
+        <button type="submit">Add Exercise</button>
+    </form>
+
     <h2>Exercises</h2>
     <p>Total exercises: {{ exercises | length }}</p>
 
