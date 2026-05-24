@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Split - LiftLog</title>
+</head>
+<body>
+    <h1>Create a Workout Split</h1>
+    <a href="/">Back to Home</a>
+
+    <h2>Popular Split Ideas</h2>
+    <div>
+        <div>
+            <h3>Push / Pull / Legs (PPL)</h3>
+            <p>3-6 days. Push = chest, shoulders, triceps. Pull = back, biceps. Legs = quads, hamstrings, glutes.</p>
+        </div>
+        <div>
+            <h3>Upper / Lower</h3>
+            <p>4 days. Alternate between upper body and lower body days.</p>
+        </div>
+        <div>
+            <h3>Full Body</h3>
+            <p>3 days. Train every muscle group each session. Great for beginners.</p>
+        </div>
+        <div>
+            <h3>Bro Split</h3>
+            <p>5 days. One muscle group per day: chest, back, shoulders, arms, legs.</p>
+        </div>
+        <div>
+            <h3>Arnold Split</h3>
+            <p>6 days. Chest+Back, Shoulders+Arms, Legs — each done twice a week.</p>
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>Name Your Split</h2>
+    <form action="/create-split" method="POST">
+        <input type="text" name="split_name" placeholder="e.g. My PPL Split" required>
+        <button type="submit">Create Split</button>
+    </form>
+</body>
+</html>

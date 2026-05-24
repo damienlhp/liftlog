@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercises - LiftLog</title>
+</head>
+<body>
+    <h1>Exercises</h1>
+    <a href="/">Back to Home</a>
+
+    <h2>Add an Exercise</h2>
+    <form action="/add-exercise" method="POST">
+        <input type="text" name="name" placeholder="Exercise name" required>
+        <select name="muscle_group">
+            <option value="Arms">Arms</option>
+            <option value="Back">Back</option>
+            <option value="Chest">Chest</option>
+            <option value="Core">Core</option>
+            <option value="Legs">Legs</option>
+            <option value="Shoulders">Shoulders</option>
+        </select>
+        <button type="submit">Add Exercise</button>
+    </form>
+
+    <h2>All Exercises</h2>
+    {% for exercise in exercises %}
+        <p>{{ exercise.name }} - {{ exercise.muscle_group }}</p>
+    {% endfor %}
+</body>
+</html>

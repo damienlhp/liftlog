@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ split.name }} - LiftLog</title>
+</head>
+<body>
+    <h1>{{ split.name }}</h1>
+    <a href="/">Back to Home</a>
+
+    <h2>Days</h2>
+    {% if days %}
+        {% for day in days %}
+            <div>
+                <h3>Day {{ day.day_order }}: {{ day.day_name }}</h3>
+                <ul>
+                    {% for exercise in day.exercises %}
+                        <li>{{ exercise.name }} - {{ exercise.muscle_group }}</li>
+                    {% endfor %}
+                </ul>
+                <a href="/split/{{ split.id }}/add-day-exercise/{{ day.id }}">+ Add Exercise to this day</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No days yet. Add your first day below.</p>
+    {% endif %}
+
+    <hr>
+    <h2>Add a Day</h2>
+    <form action="/split/{{ split.id }}/add-day" method="POST">
+        <input type="text" name="day_name" placeholder="e.g. Push, Pull, Legs, Chest Day" required>
+        <button type="submit">Add Day</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Workout - LiftLog</title>
+</head>
+<body>
+    <h1>Log a Workout</h1>
+    <a href="/">Back to Home</a>
+
+    <form action="/log-workout" method="POST">
+        <label>Exercise</label>
+        <select name="exercise_id">
+            {% for exercise in exercises %}
+                <option value="{{ exercise.id }}">{{ exercise.name }} - {{ exercise.muscle_group }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Date</label>
+        <input type="date" name="date" required>
+
+        <h3>Sets</h3>
+
+        <div id="sets-container">
+            <div class="set">
+                <label>Set 1</label>
+                <input type="number" name="weight_1" placeholder="Weight (lbs)" step="0.5" required>
+                <input type="number" name="reps_1" placeholder="Reps" required>
+            </div>
+        </div>
+
+        <button type="button" onclick="addSet()">+ Add Set</button>
+        <button type="submit">Save Workout</button>
+    </form>
+
+    <script>
+        let setCount = 1;
+
+        function addSet() {
+            setCount++;
+            const container = document.getElementById("sets-container");
+            const div = document.createElement("div");
+            div.className = "set";
+            div.innerHTML = `
+                <label>Set ${setCount}</label>
+                <input type="number" name="weight_${setCount}" placeholder="Weight (lbs)" step="0.5" required>
+                <input type="number" name="reps_${setCount}" placeholder="Reps" required>
+            `;
+            container.appendChild(div);
+        }
+    </script>
+</body>
+</html>

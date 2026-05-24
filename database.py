@@ -17,8 +17,23 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS workout_splits (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            day_of_week TEXT NOT NULL
+            name TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS split_days (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            split_id INTEGER NOT NULL,
+            day_name TEXT NOT NULL,
+            day_order INTEGER NOT NULL,
+            FOREIGN KEY (split_id) REFERENCES workout_splits(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS split_exercises (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            split_day_id INTEGER NOT NULL,
+            exercise_id INTEGER NOT NULL,
+            FOREIGN KEY (split_day_id) REFERENCES split_days(id),
+            FOREIGN KEY (exercise_id) REFERENCES exercises(id)
         );
 
         CREATE TABLE IF NOT EXISTS workout_logs (

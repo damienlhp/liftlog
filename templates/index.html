@@ -6,28 +6,25 @@
     <title>LiftLog</title>
 </head>
 <body>
-    <h1>Welcome to LiftLog</h1>
-    <p>Track your workouts and crush your PRs.</p>
+    <h1>LiftLog</h1>
 
-    <h2>Add an Exercise</h2>
-    <form action="/add-exercise" method="POST">
-        <input type="text" name="name" placeholder="Exercise name" required>
-        <select name="muscle_group">
-            <option value="Arms">Arms</option>
-            <option value="Back">Back</option>
-            <option value="Chest">Chest</option>
-            <option value="Core">Core</option>
-            <option value="Legs">Legs</option>
-            <option value="Shoulders">Shoulders</option>
-        </select>
-        <button type="submit">Add Exercise</button>
-    </form>
+    <h2>My Workout Splits</h2>
+    {% if splits %}
+        {% for split in splits %}
+            <div>
+                <h3>{{ split.name }}</h3>
+                <a href="/split/{{ split.id }}">View Split</a>
+                <a href="/log/{{ split.id }}">Log Workout</a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>You have no workout splits yet.</p>
+    {% endif %}
 
+    <a href="/create-split">+ Create a Workout Split</a>
+
+    <hr>
     <h2>Exercises</h2>
-    <p>Total exercises: {{ exercises | length }}</p>
-
-    {% for exercise in exercises %}
-        <p>{{ exercise.name }} - {{ exercise.muscle_group }}</p>
-    {% endfor %}
+    <a href="/exercises">Manage Exercises</a>
 </body>
 </html>
