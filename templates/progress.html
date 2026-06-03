@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress - LiftLog</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+    <h1>My Progress</h1>
+    <a href="/">Back to Home</a>
+
+    {% if charts %}
+        {% for chart in charts %}
+            <div>
+                <h2>{{ chart.muscle_group }}</h2>
+                <canvas id="chart-{{ loop.index }}" width="600" height="300"></canvas>
+                <script>
+                    new Chart(document.getElementById("chart-{{ loop.index }}"), {
+                        type: "line",
+                        data: {
+                            labels: {{ chart.dates | tojson }},
+                            datasets: [{
+                                label: "Total Volume (lbs)",
+                                data: {{ chart.volumes | tojson }},
+                                borderColor: "#e84545",
+                                backgroundColor: "rgba(232, 69, 69, 0.1)",
+                                borderWidth: 2,
+                                tension: 0.3,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            plugins: {
+                                legend: { display: true }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: "Volume (lbs)"
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: "Date"
+                                    }
+                                }
+                            }
+                        }
+                    });
+                </script>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No workout data yet. Log some workouts first!</p>
+    {% endif %}
+</body>
+</html>

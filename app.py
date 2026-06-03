@@ -257,5 +257,33 @@ def add_custom_exercise(split_id, day_id):
     conn.close()
     return redirect(url_for("add_day_exercise_page", split_id=split_id, day_id=day_id))
 
+@app.route("/progress")
+def progress():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT muscle_group FROM exercises ORDER BY muscle_group")
+    muscle_groups = [row["muscle_group"] for row in cursor.fetchall()]
+    charts = []
+    for muscle_group in muscle_groups:
+        cursor.execute("""
+            SELECT workout_logs.date,
+                   SUM(sets.weight * sets.reps) as volume
+            FROM workout_logs
+            JOIN exercises ON workout_logs.exercise_id = exercises.id
+            JOIN sets ON sets.log_id = workout_logs.id
+            WHERE exercises.muscle_group = ?
+            GROUP BY workout_logs.date
+            ORDER BY workout_logs.date
+        """, (muscle_group,))
+        rows = cursor.fetchall()
+        if rows:
+            charts.append({
+                "muscle_group": muscle_group,
+                "dates": [row["date"] for row in rows],
+                "volumes": [row["volume"] for row in rows]
+            })
+    conn.close()
+    return render_template("progress.html", charts=charts)
+
 if __name__ == "__main__":
     app.run(debug=True)
