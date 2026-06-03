@@ -29,5 +29,19 @@
         </select>
         <button type="submit">Add Exercise</button>
     </form>
+
+    <h2>Can't find your exercise? Add a custom one</h2>
+    <form action="/split/{{ split_id }}/add-custom-exercise/{{ day.id }}" method="POST">
+        <input type="text" name="name" placeholder="Exercise name" required>
+        <select name="muscle_group">
+            <option value="Arms">Arms</option>
+            <option value="Back">Back</option>
+            <option value="Chest">Chest</option>
+            <option value="Core">Core</option>
+            <option value="Legs">Legs</option>
+            <option value="Shoulders">Shoulders</option>
+        </select>
+        <button type="submit">Add Custom Exercise</button>
+    </form>
 </body>
 </html>

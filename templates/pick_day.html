@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pick a Day - LiftLog</title>
+</head>
+<body>
+    <h1>{{ split.name }}</h1>
+    <h2>Which day are you training today?</h2>
+    <a href="/">Back to Home</a>
+
+    {% if days %}
+        {% for day in days %}
+            <div>
+                <a href="/log/{{ split.id }}/{{ day.id }}">
+                    Day {{ day.day_order }}: {{ day.day_name }}
+                </a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No days in this split yet.</p>
+        <a href="/split/{{ split.id }}">Add days to this split</a>
+    {% endif %}
+</body>
+</html>

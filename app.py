@@ -176,5 +176,86 @@ def save_workout():
     conn.close()
     return redirect(url_for("home"))
 
+@app.route("/log/<int:split_id>")
+def pick_day(split_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM workout_splits WHERE id = ?", (split_id,))
+    split = cursor.fetchone()
+    cursor.execute(
+        "SELECT * FROM split_days WHERE split_id = ? ORDER BY day_order",
+        (split_id,)
+    )
+    days = cursor.fetchall()
+    conn.close()
+    return render_template("pick_day.html", split=split, days=days)
+
+@app.route("/log/<int:split_id>/<int:day_id>")
+def log_day(split_id, day_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM workout_splits WHERE id = ?", (split_id,))
+    split = cursor.fetchone()
+    cursor.execute("SELECT * FROM split_days WHERE id = ?", (day_id,))
+    day = cursor.fetchone()
+    cursor.execute("""
+        SELECT exercises.* FROM exercises
+        JOIN split_exercises ON exercises.id = split_exercises.exercise_id
+        WHERE split_exercises.split_day_id = ?
+    """, (day_id,))
+    exercises = cursor.fetchall()
+    conn.close()
+    return render_template("log_day.html", split=split, day=day, exercises=exercises)
+
+@app.route("/log/<int:split_id>/<int:day_id>", methods=["POST"])
+def save_day_workout(split_id, day_id):
+    date = request.form["date"]
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT exercises.* FROM exercises
+        JOIN split_exercises ON exercises.id = split_exercises.exercise_id
+        WHERE split_exercises.split_day_id = ?
+    """, (day_id,))
+    exercises = cursor.fetchall()
+    for exercise in exercises:
+        exercise_id = exercise["id"]
+        cursor.execute(
+            "INSERT INTO workout_logs (exercise_id, date) VALUES (?, ?)",
+            (exercise_id, date)
+        )
+        log_id = cursor.lastrowid
+        set_number = 1
+        while f"weight_{exercise_id}_{set_number}" in request.form:
+            weight = request.form[f"weight_{exercise_id}_{set_number}"]
+            reps = request.form[f"reps_{exercise_id}_{set_number}"]
+            cursor.execute(
+                "INSERT INTO sets (log_id, set_number, reps, weight) VALUES (?, ?, ?, ?)",
+                (log_id, set_number, reps, weight)
+            )
+            set_number += 1
+    conn.commit()
+    conn.close()
+    return redirect(url_for("home"))
+
+@app.route("/split/<int:split_id>/add-custom-exercise/<int:day_id>", methods=["POST"])
+def add_custom_exercise(split_id, day_id):
+    name = request.form["name"].title()
+    muscle_group = request.form["muscle_group"]
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO exercises (name, muscle_group) VALUES (?, ?)",
+        (name, muscle_group)
+    )
+    exercise_id = cursor.lastrowid
+    cursor.execute(
+        "INSERT INTO split_exercises (split_day_id, exercise_id) VALUES (?, ?)",
+        (day_id, exercise_id)
+    )
+    conn.commit()
+    conn.close()
+    return redirect(url_for("add_day_exercise_page", split_id=split_id, day_id=day_id))
+
 if __name__ == "__main__":
     app.run(debug=True)
