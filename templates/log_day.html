@@ -9,6 +9,12 @@
     <h1>{{ split.name }} — {{ day.day_name }}</h1>
     <a href="/">Back to Home</a>
 
+    <!-- Unit toggle -->
+    <div>
+        <button type="button" onclick="toggleUnit()">Switch to kg</button>
+        <input type="hidden" id="selected-unit" name="unit" value="lbs">
+    </div>
+
     <form action="/log/{{ split.id }}/{{ day.id }}" method="POST">
         <input type="date" name="date" required>
 
@@ -23,6 +29,7 @@
                             <label>Set {{ i }}</label>
                             {% if previous_data[exercise.id] and previous_data[exercise.id]["sets"]|length >= i %}
                                 <input type="number"
+                                    class="weight-input"
                                     name="weight_{{ exercise.id }}_{{ i }}"
                                     value="{{ previous_data[exercise.id]['sets'][i-1]['weight'] }}"
                                     step="0.5" required>
@@ -32,6 +39,7 @@
                                     required>
                             {% else %}
                                 <input type="number"
+                                    class="weight-input"
                                     name="weight_{{ exercise.id }}_{{ i }}"
                                     placeholder="Weight (lbs)"
                                     step="0.5" required>
@@ -40,6 +48,7 @@
                                     placeholder="Reps"
                                     required>
                             {% endif %}
+                            <span class="unit-label">lbs</span>
                         </div>
                     {% endfor %}
                 </div>
@@ -48,11 +57,44 @@
             </div>
         {% endfor %}
 
+        <input type="hidden" name="unit" id="unit-input" value="lbs">
         <button type="submit">Save Workout</button>
     </form>
 
     <script>
+        let currentUnit = "lbs";
         let setCounts = {};
+
+        function toggleUnit() {
+            // Flip the unit
+            currentUnit = currentUnit === "lbs" ? "kg" : "lbs";
+
+            // Update the toggle button text
+            document.querySelector("button[onclick='toggleUnit()']").textContent =
+                currentUnit === "lbs" ? "Switch to kg" : "Switch to lbs";
+
+            // Update the hidden input so the unit gets sent with the form
+            document.getElementById("unit-input").value = currentUnit;
+
+            // Convert all existing weight inputs
+            const weightInputs = document.querySelectorAll(".weight-input");
+            weightInputs.forEach(function(input) {
+                if (input.value) {
+                    if (currentUnit === "kg") {
+                        input.value = (parseFloat(input.value) / 2.205).toFixed(1);
+                    } else {
+                        input.value = (parseFloat(input.value) * 2.205).toFixed(1);
+                    }
+                }
+                input.placeholder = "Weight (" + currentUnit + ")";
+            });
+
+            // Update all unit labels
+            const unitLabels = document.querySelectorAll(".unit-label");
+            unitLabels.forEach(function(label) {
+                label.textContent = currentUnit;
+            });
+        }
 
         function addSet(exerciseId, baseCount) {
             if (!setCounts[exerciseId]) {
@@ -64,8 +106,9 @@
             const div = document.createElement("div");
             div.innerHTML = `
                 <label>Set ${count}</label>
-                <input type="number" name="weight_${exerciseId}_${count}" placeholder="Weight (lbs)" step="0.5" required>
+                <input type="number" class="weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="0.5" required>
                 <input type="number" name="reps_${exerciseId}_${count}" placeholder="Reps" required>
+                <span class="unit-label">${currentUnit}</span>
             `;
             container.appendChild(div);
         }
