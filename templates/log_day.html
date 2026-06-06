@@ -32,7 +32,7 @@
                                     class="weight-input"
                                     name="weight_{{ exercise.id }}_{{ i }}"
                                     value="{{ previous_data[exercise.id]['sets'][i-1]['weight'] }}"
-                                    step="0.5" required>
+                                    step="any" required>
                                 <input type="number"
                                     name="reps_{{ exercise.id }}_{{ i }}"
                                     value="{{ previous_data[exercise.id]['sets'][i-1]['reps'] }}"
@@ -42,7 +42,7 @@
                                     class="weight-input"
                                     name="weight_{{ exercise.id }}_{{ i }}"
                                     placeholder="Weight (lbs)"
-                                    step="0.5" required>
+                                    step="any" required>
                                 <input type="number"
                                     name="reps_{{ exercise.id }}_{{ i }}"
                                     placeholder="Reps"
@@ -106,7 +106,7 @@
             const div = document.createElement("div");
             div.innerHTML = `
                 <label>Set ${count}</label>
-                <input type="number" class="weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="0.5" required>
+                <input type="number" class="weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="any" required>
                 <input type="number" name="reps_${exerciseId}_${count}" placeholder="Reps" required>
                 <span class="unit-label">${currentUnit}</span>
             `;
