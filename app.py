@@ -208,6 +208,7 @@ def log_day(split_id, day_id):
     """, (day_id,))
     exercises = cursor.fetchall()
     previous_data = {}
+    last_unit = "lbs"
     for exercise in exercises:
         cursor.execute("""
             SELECT workout_logs.id, workout_logs.date
@@ -219,18 +220,22 @@ def log_day(split_id, day_id):
         last_log = cursor.fetchone()
         if last_log:
             cursor.execute("""
-                SELECT set_number, weight, reps
+                SELECT set_number, weight, reps, unit
                 FROM sets
                 WHERE log_id = ?
                 ORDER BY set_number
             """, (last_log["id"],))
+            sets = cursor.fetchall()
             previous_data[exercise["id"]] = {
                 "date": last_log["date"],
-                "sets": cursor.fetchall()
+                "sets": sets
             }
+            if sets:
+                last_unit = sets[0]["unit"]
     conn.close()
     return render_template("log_day.html", split=split, day=day,
-                           exercises=exercises, previous_data=previous_data)
+                           exercises=exercises, previous_data=previous_data,
+                           last_unit=last_unit)
 
 @app.route("/log/<int:split_id>/<int:day_id>", methods=["POST"])
 def save_day_workout(split_id, day_id):
@@ -254,9 +259,10 @@ def save_day_workout(split_id, day_id):
         while f"weight_{exercise_id}_{set_number}" in request.form:
             weight = request.form[f"weight_{exercise_id}_{set_number}"]
             reps = request.form[f"reps_{exercise_id}_{set_number}"]
+            unit = request.form.get("unit", "lbs")
             cursor.execute(
-                "INSERT INTO sets (log_id, set_number, reps, weight) VALUES (?, ?, ?, ?)",
-                (log_id, set_number, reps, weight)
+                "INSERT INTO sets (log_id, set_number, reps, weight, unit) VALUES (?, ?, ?, ?, ?)",
+                (log_id, set_number, reps, weight, unit)
             )
             set_number += 1
     conn.commit()

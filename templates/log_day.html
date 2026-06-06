@@ -11,7 +11,7 @@
 
     <!-- Unit toggle -->
     <div>
-        <button type="button" onclick="toggleUnit()">Switch to kg</button>
+        <button type="button" onclick="toggleUnit()">Switch to {{ "lbs" if last_unit == "kg" else "kg" }}</button>
         <input type="hidden" id="selected-unit" name="unit" value="lbs">
     </div>
 
@@ -48,7 +48,7 @@
                                     placeholder="Reps"
                                     required>
                             {% endif %}
-                            <span class="unit-label">lbs</span>
+                            <span class="unit-label">{{ last_unit }}</span>
                         </div>
                     {% endfor %}
                 </div>
@@ -57,12 +57,12 @@
             </div>
         {% endfor %}
 
-        <input type="hidden" name="unit" id="unit-input" value="lbs">
+        <input type="hidden" name="unit" id="unit-input" value="{{ last_unit }}">
         <button type="submit">Save Workout</button>
     </form>
 
     <script>
-        let currentUnit = "lbs";
+        let currentUnit = "{{ last_unit }}";
         let setCounts = {};
 
         function toggleUnit() {
