@@ -15,6 +15,9 @@
                 <h3>{{ split.name }}</h3>
                 <a href="/split/{{ split.id }}">View Split</a>
                 <a href="/log/{{ split.id }}">Log Workout</a>
+                <form action="/split/{{ split.id }}/delete" method="POST" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Delete {{ split.name }}?')">Delete</button>
+                </form>
             </div>
         {% endfor %}
     {% else %}
