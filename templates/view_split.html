@@ -16,7 +16,12 @@
                 <h3>Day {{ day.day_order }}: {{ day.day_name }}</h3>
                 <ul>
                     {% for exercise in day.exercises %}
-                        <li>{{ exercise.name }} - {{ exercise.muscle_group }}</li>
+                        <li>
+                            {{ exercise.name }} - {{ exercise.muscle_group }} — {{ exercise.sets_count }} sets
+                            <form action="/split/{{ split.id }}/remove-exercise/{{ day.id }}/{{ exercise.split_exercise_id }}" method="POST" style="display:inline">
+                                <button type="submit">Remove</button>
+                            </form>
+                        </li>
                     {% endfor %}
                 </ul>
                 <a href="/split/{{ split.id }}/add-day-exercise/{{ day.id }}">+ Add Exercise to this day</a>

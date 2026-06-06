@@ -13,7 +13,7 @@
     {% if current_exercises %}
         <ul>
             {% for exercise in current_exercises %}
-                <li>{{ exercise.name }} - {{ exercise.muscle_group }}</li>
+                <li>{{ exercise.name }} - {{ exercise.muscle_group }} — {{ exercise.sets_count }} sets</li>
             {% endfor %}
         </ul>
     {% else %}
@@ -26,6 +26,15 @@
             {% for exercise in all_exercises %}
                 <option value="{{ exercise.id }}">{{ exercise.name }} - {{ exercise.muscle_group }}</option>
             {% endfor %}
+        </select>
+        <label>Sets</label>
+        <select name="sets_count">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
         </select>
         <button type="submit">Add Exercise</button>
     </form>
@@ -40,6 +49,15 @@
             <option value="Core">Core</option>
             <option value="Legs">Legs</option>
             <option value="Shoulders">Shoulders</option>
+        </select>
+        <label>Sets</label>
+        <select name="sets_count">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
         </select>
         <button type="submit">Add Custom Exercise</button>
     </form>

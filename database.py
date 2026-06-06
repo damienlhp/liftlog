@@ -32,6 +32,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             split_day_id INTEGER NOT NULL,
             exercise_id INTEGER NOT NULL,
+            sets_count INTEGER NOT NULL DEFAULT 3,
             FOREIGN KEY (split_day_id) REFERENCES split_days(id),
             FOREIGN KEY (exercise_id) REFERENCES exercises(id)
         );

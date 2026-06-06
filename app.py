@@ -50,7 +50,7 @@ def create_split():
 
 @app.route("/create-split", methods=["POST"])
 def save_split():
-    split_name = request.form["split_name"]
+    split_name = request.form["split_name"].title()
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
@@ -76,7 +76,9 @@ def view_split(split_id):
     days_with_exercises = []
     for day in days:
         cursor.execute("""
-            SELECT exercises.* FROM exercises
+            SELECT exercises.*, split_exercises.sets_count,
+                   split_exercises.id as split_exercise_id
+            FROM exercises
             JOIN split_exercises ON exercises.id = split_exercises.exercise_id
             WHERE split_exercises.split_day_id = ?
         """, (day["id"],))
@@ -92,7 +94,7 @@ def view_split(split_id):
 
 @app.route("/split/<int:split_id>/add-day", methods=["POST"])
 def add_day(split_id):
-    day_name = request.form["day_name"]
+    day_name = request.form["day_name"].title()
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
@@ -115,7 +117,7 @@ def add_day_exercise_page(split_id, day_id):
     cursor.execute("SELECT * FROM split_days WHERE id = ?", (day_id,))
     day = cursor.fetchone()
     cursor.execute("""
-        SELECT exercises.* FROM exercises
+        SELECT exercises.*, split_exercises.sets_count FROM exercises
         JOIN split_exercises ON exercises.id = split_exercises.exercise_id
         WHERE split_exercises.split_day_id = ?
     """, (day_id,))
@@ -133,11 +135,12 @@ def add_day_exercise_page(split_id, day_id):
 @app.route("/split/<int:split_id>/add-day-exercise/<int:day_id>", methods=["POST"])
 def save_day_exercise(split_id, day_id):
     exercise_id = request.form["exercise_id"]
+    sets_count = request.form["sets_count"]
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO split_exercises (split_day_id, exercise_id) VALUES (?, ?)",
-        (day_id, exercise_id)
+        "INSERT INTO split_exercises (split_day_id, exercise_id, sets_count) VALUES (?, ?, ?)",
+        (day_id, exercise_id, sets_count)
     )
     conn.commit()
     conn.close()
@@ -199,13 +202,35 @@ def log_day(split_id, day_id):
     cursor.execute("SELECT * FROM split_days WHERE id = ?", (day_id,))
     day = cursor.fetchone()
     cursor.execute("""
-        SELECT exercises.* FROM exercises
+        SELECT exercises.*, split_exercises.sets_count FROM exercises
         JOIN split_exercises ON exercises.id = split_exercises.exercise_id
         WHERE split_exercises.split_day_id = ?
     """, (day_id,))
     exercises = cursor.fetchall()
+    previous_data = {}
+    for exercise in exercises:
+        cursor.execute("""
+            SELECT workout_logs.id, workout_logs.date
+            FROM workout_logs
+            WHERE workout_logs.exercise_id = ?
+            ORDER BY workout_logs.date DESC
+            LIMIT 1
+        """, (exercise["id"],))
+        last_log = cursor.fetchone()
+        if last_log:
+            cursor.execute("""
+                SELECT set_number, weight, reps
+                FROM sets
+                WHERE log_id = ?
+                ORDER BY set_number
+            """, (last_log["id"],))
+            previous_data[exercise["id"]] = {
+                "date": last_log["date"],
+                "sets": cursor.fetchall()
+            }
     conn.close()
-    return render_template("log_day.html", split=split, day=day, exercises=exercises)
+    return render_template("log_day.html", split=split, day=day,
+                           exercises=exercises, previous_data=previous_data)
 
 @app.route("/log/<int:split_id>/<int:day_id>", methods=["POST"])
 def save_day_workout(split_id, day_id):
@@ -242,6 +267,7 @@ def save_day_workout(split_id, day_id):
 def add_custom_exercise(split_id, day_id):
     name = request.form["name"].title()
     muscle_group = request.form["muscle_group"]
+    sets_count = request.form["sets_count"]
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
@@ -250,8 +276,8 @@ def add_custom_exercise(split_id, day_id):
     )
     exercise_id = cursor.lastrowid
     cursor.execute(
-        "INSERT INTO split_exercises (split_day_id, exercise_id) VALUES (?, ?)",
-        (day_id, exercise_id)
+        "INSERT INTO split_exercises (split_day_id, exercise_id, sets_count) VALUES (?, ?, ?)",
+        (day_id, exercise_id, sets_count)
     )
     conn.commit()
     conn.close()
@@ -284,6 +310,18 @@ def progress():
             })
     conn.close()
     return render_template("progress.html", charts=charts)
+
+@app.route("/split/<int:split_id>/remove-exercise/<int:day_id>/<int:split_exercise_id>", methods=["POST"])
+def remove_exercise(split_id, day_id, split_exercise_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM split_exercises WHERE id = ?",
+        (split_exercise_id,)
+    )
+    conn.commit()
+    conn.close()
+    return redirect(url_for("view_split", split_id=split_id))
 
 if __name__ == "__main__":
     app.run(debug=True)
