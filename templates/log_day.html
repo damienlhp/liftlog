@@ -20,8 +20,11 @@
 
         {% for exercise in exercises %}
             <div>
-                <h3>{{ exercise.name }}</h3>
-                <p>{{ exercise.muscle_group }}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>{{ exercise.name }}</h3>
+                    <button type="button" onclick="openMenu({{ exercise.id }}, '{{ exercise.name }}')">⋯</button>
+            </div>
+            <p>{{ exercise.muscle_group }}</p>
 
                 <div id="sets-{{ exercise.id }}">
                     {% for i in range(1, exercise.sets_count + 1) %}
@@ -111,6 +114,40 @@
                 <span class="unit-label">${currentUnit}</span>
             `;
             container.appendChild(div);
+        }
+    </script>
+        <!-- Exercise options modal -->
+    <div id="exercise-modal" style="display:none; position:fixed; bottom:0; left:0; right:0;
+        background:white; border-top:2px solid #ccc; padding:20px; z-index:1000;">
+        <h3 id="modal-exercise-name"></h3>
+        <p style="color:gray; font-size:0.85em;">EXERCISE OPTIONS</p>
+        <hr>
+        <ul style="list-style:none; padding:0;">
+            <li style="padding:12px 0; border-bottom:1px solid #eee;">
+                <a id="modal-graph-link" href="#">📈 View graph <span style="color:gray; font-size:0.85em;">— Progress over time</span></a>
+            </li>
+            <li style="padding:12px 0; border-bottom:1px solid #eee; color:gray;">
+                🔗 Add superset <span style="font-size:0.85em;">— Link with another exercise</span>
+            </li>
+        </ul>
+        <button type="button" onclick="closeMenu()" style="margin-top:10px;">Close</button>
+    </div>
+
+    <!-- Dark overlay behind modal -->
+    <div id="modal-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+        background:rgba(0,0,0,0.4); z-index:999;" onclick="closeMenu()"></div>
+
+    <script>
+        function openMenu(exerciseId, exerciseName) {
+            document.getElementById("modal-exercise-name").textContent = exerciseName;
+            document.getElementById("modal-graph-link").href = "/exercise/" + exerciseId + "/graph";
+            document.getElementById("exercise-modal").style.display = "block";
+            document.getElementById("modal-overlay").style.display = "block";
+        }
+
+        function closeMenu() {
+            document.getElementById("exercise-modal").style.display = "none";
+            document.getElementById("modal-overlay").style.display = "none";
         }
     </script>
 </body>

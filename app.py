@@ -340,5 +340,26 @@ def delete_split(split_id):
     conn.close()
     return redirect(url_for("home"))
 
+@app.route("/exercise/<int:exercise_id>/graph")
+def exercise_graph(exercise_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM exercises WHERE id = ?", (exercise_id,))
+    exercise = cursor.fetchone()
+    cursor.execute("""
+        SELECT workout_logs.date,
+               SUM(sets.weight * sets.reps) as volume
+        FROM workout_logs
+        JOIN sets ON sets.log_id = workout_logs.id
+        WHERE workout_logs.exercise_id = ?
+        GROUP BY workout_logs.date
+        ORDER BY workout_logs.date
+    """, (exercise_id,))
+    rows = cursor.fetchall()
+    dates = [row["date"] for row in rows]
+    volumes = [row["volume"] for row in rows]
+    conn.close()
+    return render_template("exercise_graph.html", exercise=exercise, dates=dates, volumes=volumes)
+
 if __name__ == "__main__":
     app.run(debug=True)
