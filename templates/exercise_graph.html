@@ -11,35 +11,81 @@
     <h1>{{ exercise.name }}</h1>
     <p>{{ exercise.muscle_group }}</p>
 
-    {% if dates %}
-        <canvas id="exerciseChart"></canvas>
-        <script>
-            const ctx = document.getElementById("exerciseChart").getContext("2d");
-            new Chart(ctx, {
+    <div>
+        <p>CURRENT MAX</p>
+        <h2>{{ current_max }}</h2>
+    </div>
+
+    <div>
+        <div>
+            <p>All-time Best</p>
+            <strong>{{ all_time_best }}</strong>
+        </div>
+    </div>
+
+    <!-- Tab buttons -->
+    <div>
+        <button onclick="showChart('strength')" id="tab-strength">Strength</button>
+        <button onclick="showChart('reps')" id="tab-reps">Reps</button>
+        <button onclick="showChart('volume')" id="tab-volume">Volume</button>
+    </div>
+
+    <!-- Charts -->
+    <div id="chart-strength"><canvas id="strengthChart"></canvas></div>
+    <div id="chart-reps" style="display:none"><canvas id="repsChart"></canvas></div>
+    <div id="chart-volume" style="display:none"><canvas id="volumeChart"></canvas></div>
+
+    <script>
+        const strengthDates = {{ strength_dates | tojson }};
+        const strengthValues = {{ strength_values | tojson }};
+        const repsDates = {{ reps_dates | tojson }};
+        const repsValues = {{ reps_values | tojson }};
+        const volumeDates = {{ volume_dates | tojson }};
+        const volumeValues = {{ volume_values | tojson }};
+    </script>
+
+    <script>
+        function makeChart(id, labels, data, label, color) {
+            return new Chart(document.getElementById(id).getContext("2d"), {
                 type: "line",
                 data: {
-                    labels: {{ dates | tojson }},
+                    labels: labels,
                     datasets: [{
-                        label: "Volume (weight × reps)",
-                        data: {{ volumes | tojson }},
-                        borderColor: "rgb(75, 192, 192)",
+                        label: label,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color.replace("1)", "0.1)"),
                         tension: 0.1,
-                        fill: false
+                        fill: true,
+                        pointRadius: 4
                     }]
                 },
                 options: {
                     responsive: true,
-                    plugins: {
-                        legend: { position: "top" }
-                    },
-                    scales: {
-                        y: { beginAtZero: false }
-                    }
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: false } }
                 }
             });
-        </script>
-    {% else %}
-        <p>No workout data yet for this exercise. Log a session first!</p>
-    {% endif %}
+        }
+
+        makeChart("strengthChart", strengthDates, strengthValues, "Max Weight", "rgba(75, 192, 192, 1)");
+        makeChart("repsChart", repsDates, repsValues, "Total Reps", "rgba(153, 102, 255, 1)");
+        makeChart("volumeChart", volumeDates, volumeValues, "Volume", "rgba(255, 159, 64, 1)");
+
+        function showChart(type) {
+            document.getElementById("chart-strength").style.display = "none";
+            document.getElementById("chart-reps").style.display = "none";
+            document.getElementById("chart-volume").style.display = "none";
+            document.getElementById("chart-" + type).style.display = "block";
+
+            document.getElementById("tab-strength").style.fontWeight = "normal";
+            document.getElementById("tab-reps").style.fontWeight = "normal";
+            document.getElementById("tab-volume").style.fontWeight = "normal";
+            document.getElementById("tab-" + type).style.fontWeight = "bold";
+        }
+
+        // Start on strength tab
+        showChart("strength");
+    </script>
 </body>
 </html>

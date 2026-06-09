@@ -344,22 +344,79 @@ def delete_split(split_id):
 def exercise_graph(exercise_id):
     conn = get_db()
     cursor = conn.cursor()
+
+    # Get exercise info
     cursor.execute("SELECT * FROM exercises WHERE id = ?", (exercise_id,))
     exercise = cursor.fetchone()
+
+    # Current max — highest weight from most recent session
     cursor.execute("""
-        SELECT workout_logs.date,
-               SUM(sets.weight * sets.reps) as volume
+        SELECT MAX(sets.weight) as max_weight
+        FROM sets
+        JOIN workout_logs ON sets.log_id = workout_logs.id
+        WHERE workout_logs.exercise_id = ?
+        AND workout_logs.date = (
+            SELECT MAX(date) FROM workout_logs WHERE exercise_id = ?
+        )
+    """, (exercise_id, exercise_id))
+    current_max_row = cursor.fetchone()
+    current_max = current_max_row["max_weight"] if current_max_row["max_weight"] else 0
+
+    # All-time best — highest weight ever
+    cursor.execute("""
+        SELECT MAX(sets.weight) as max_weight
+        FROM sets
+        JOIN workout_logs ON sets.log_id = workout_logs.id
+        WHERE workout_logs.exercise_id = ?
+    """, (exercise_id,))
+    all_time_row = cursor.fetchone()
+    all_time_best = all_time_row["max_weight"] if all_time_row["max_weight"] else 0
+
+    # Strength graph — max weight per session
+    cursor.execute("""
+        SELECT workout_logs.date, MAX(sets.weight) as max_weight
         FROM workout_logs
         JOIN sets ON sets.log_id = workout_logs.id
         WHERE workout_logs.exercise_id = ?
         GROUP BY workout_logs.date
         ORDER BY workout_logs.date
     """, (exercise_id,))
-    rows = cursor.fetchall()
-    dates = [row["date"] for row in rows]
-    volumes = [row["volume"] for row in rows]
+    strength_rows = cursor.fetchall()
+
+    # Reps graph — total reps per session
+    cursor.execute("""
+        SELECT workout_logs.date, SUM(sets.reps) as total_reps
+        FROM workout_logs
+        JOIN sets ON sets.log_id = workout_logs.id
+        WHERE workout_logs.exercise_id = ?
+        GROUP BY workout_logs.date
+        ORDER BY workout_logs.date
+    """, (exercise_id,))
+    reps_rows = cursor.fetchall()
+
+    # Volume graph — weight x reps per session
+    cursor.execute("""
+        SELECT workout_logs.date, SUM(sets.weight * sets.reps) as volume
+        FROM workout_logs
+        JOIN sets ON sets.log_id = workout_logs.id
+        WHERE workout_logs.exercise_id = ?
+        GROUP BY workout_logs.date
+        ORDER BY workout_logs.date
+    """, (exercise_id,))
+    volume_rows = cursor.fetchall()
+
     conn.close()
-    return render_template("exercise_graph.html", exercise=exercise, dates=dates, volumes=volumes)
+    return render_template("exercise_graph.html",
+        exercise=exercise,
+        current_max=current_max,
+        all_time_best=all_time_best,
+        strength_dates=[r["date"] for r in strength_rows],
+        strength_values=[r["max_weight"] for r in strength_rows],
+        reps_dates=[r["date"] for r in reps_rows],
+        reps_values=[r["total_reps"] for r in reps_rows],
+        volume_dates=[r["date"] for r in volume_rows],
+        volume_values=[r["volume"] for r in volume_rows]
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
