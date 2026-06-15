@@ -55,6 +55,17 @@ def init_db():
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (log_id) REFERENCES workout_logs(id)
         );
+
+        CREATE TABLE IF NOT EXISTS supersets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            split_day_id INTEGER NOT NULL,
+            exercise_id_1 INTEGER NOT NULL,
+            exercise_id_2 INTEGER NOT NULL,
+            FOREIGN KEY (split_day_id) REFERENCES split_days(id),
+            FOREIGN KEY (exercise_id_1) REFERENCES exercises(id),
+            FOREIGN KEY (exercise_id_2) REFERENCES exercises(id)
+        );
+                         
     """)
 
     conn.commit()

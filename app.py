@@ -210,6 +210,14 @@ def log_day(split_id, day_id):
     exercises = cursor.fetchall()
     previous_data = {}
     last_unit = "lbs"
+    
+    # Fetch existing supersets for this day
+    cursor.execute("""
+        SELECT * FROM supersets WHERE split_day_id = ?
+    """, (day_id,))
+    superset_rows = cursor.fetchall()
+    supersets = {row["exercise_id_1"]: row["exercise_id_2"] for row in superset_rows}
+
     for exercise in exercises:
         cursor.execute("""
             SELECT workout_logs.id, workout_logs.date
@@ -234,9 +242,7 @@ def log_day(split_id, day_id):
             if sets:
                 last_unit = sets[0]["unit"]
     conn.close()
-    return render_template("log_day.html", split=split, day=day,
-                           exercises=exercises, previous_data=previous_data,
-                           last_unit=last_unit)
+    return render_template("log_day.html", split=split, day=day, exercises=exercises, previous_data=previous_data, last_unit=last_unit, supersets=supersets)
 
 @app.route("/log/<int:split_id>/<int:day_id>", methods=["POST"])
 def save_day_workout(split_id, day_id):
@@ -266,6 +272,15 @@ def save_day_workout(split_id, day_id):
                 (log_id, set_number, reps, weight, unit)
             )
             set_number += 1
+    # Save supersets
+    cursor.execute("DELETE FROM supersets WHERE split_day_id = ?", (day_id,))
+    superset_pairs = request.form.getlist("superset_pair")
+    for pair in superset_pairs:
+        ex1, ex2 = pair.split("_")
+        cursor.execute(
+            "INSERT INTO supersets (split_day_id, exercise_id_1, exercise_id_2) VALUES (?, ?, ?)",
+            (day_id, ex1, ex2)
+        )
     conn.commit()
     conn.close()
     return redirect(url_for("home"))
@@ -426,6 +441,25 @@ def remove_exercise_from_log(split_id, day_id, split_exercise_id):
     cursor.execute(
         "DELETE FROM split_exercises WHERE id = ?",
         (split_exercise_id,)
+    )
+    conn.commit()
+    conn.close()
+    return redirect(url_for("log_day", split_id=split_id, day_id=day_id))
+
+@app.route("/log/<int:split_id>/<int:day_id>/add-superset-exercise", methods=["POST"])
+def add_superset_exercise(split_id, day_id):
+    name = request.form["name"].title()
+    muscle_group = request.form["muscle_group"]
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO exercises (name, muscle_group) VALUES (?, ?)",
+        (name, muscle_group)
+    )
+    exercise_id = cursor.lastrowid
+    cursor.execute(
+        "INSERT INTO split_exercises (split_day_id, exercise_id, sets_count) VALUES (?, ?, ?)",
+        (day_id, exercise_id, 3)
     )
     conn.commit()
     conn.close()
