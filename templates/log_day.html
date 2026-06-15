@@ -148,7 +148,7 @@
         function openMenu(exerciseId, exerciseName, splitExerciseId) {
             document.getElementById("modal-exercise-name").textContent = exerciseName;
             document.getElementById("modal-graph-link").href = "/exercise/" + exerciseId + "/graph";
-            document.getElementById("modal-delete-form").action = "/split/{{ split.id }}/remove-exercise/{{ day.id }}/" + splitExerciseId;
+            document.getElementById("modal-delete-form").action = "/log/{{ split.id }}/{{ day.id }}/remove-exercise/" + splitExerciseId;
             document.getElementById("exercise-modal").style.display = "block";
             document.getElementById("modal-overlay").style.display = "block";
         }

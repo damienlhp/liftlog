@@ -202,7 +202,8 @@ def log_day(split_id, day_id):
     cursor.execute("SELECT * FROM split_days WHERE id = ?", (day_id,))
     day = cursor.fetchone()
     cursor.execute("""
-        SELECT exercises.*, split_exercises.sets_count FROM exercises
+        SELECT exercises.*, split_exercises.sets_count,
+            split_exercises.id as split_exercise_id FROM exercises
         JOIN split_exercises ON exercises.id = split_exercises.exercise_id
         WHERE split_exercises.split_day_id = ?
     """, (day_id,))
@@ -417,6 +418,18 @@ def exercise_graph(exercise_id):
         volume_dates=[r["date"] for r in volume_rows],
         volume_values=[r["volume"] for r in volume_rows]
     )
+
+@app.route("/log/<int:split_id>/<int:day_id>/remove-exercise/<int:split_exercise_id>", methods=["POST"])
+def remove_exercise_from_log(split_id, day_id, split_exercise_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "DELETE FROM split_exercises WHERE id = ?",
+        (split_exercise_id,)
+    )
+    conn.commit()
+    conn.close()
+    return redirect(url_for("log_day", split_id=split_id, day_id=day_id))
 
 if __name__ == "__main__":
     app.run(debug=True)
