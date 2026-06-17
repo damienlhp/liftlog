@@ -205,12 +205,15 @@
             list.innerHTML = "";
             currentExerciseIds.forEach(function(exId) {
                 if (exId !== currentExerciseId) {
-                    const name = document.querySelector("#exercise-block-" + exId + " h3").textContent;
-                    const li = document.createElement("li");
-                    li.style = "padding:10px 0; border-bottom:1px solid #eee; cursor:pointer;";
-                    li.textContent = name;
-                    li.onclick = function() { selectSuperset(exId); };
-                    list.appendChild(li);
+                    const block = document.querySelector("#exercise-block-" + exId + " h3");
+                    if (block) {
+                        const name = block.textContent;
+                        const li = document.createElement("li");
+                        li.style = "padding:10px 0; border-bottom:1px solid #eee; cursor:pointer;";
+                        li.textContent = name;
+                        li.onclick = function() { selectSuperset(exId); };
+                        list.appendChild(li);
+                    }
                 }
             });
             document.getElementById("superset-panel").style.display = "block";
