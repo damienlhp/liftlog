@@ -450,17 +450,25 @@ def remove_exercise_from_log(split_id, day_id, split_exercise_id):
 def add_superset_exercise(split_id, day_id):
     name = request.form["name"].title()
     muscle_group = request.form["muscle_group"]
+    exercise_id_1 = request.form.get("exercise_id_1")
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
         "INSERT INTO exercises (name, muscle_group) VALUES (?, ?)",
         (name, muscle_group)
     )
-    exercise_id = cursor.lastrowid
+    exercise_id_2 = cursor.lastrowid
     cursor.execute(
         "INSERT INTO split_exercises (split_day_id, exercise_id, sets_count) VALUES (?, ?, ?)",
-        (day_id, exercise_id, 3)
+        (day_id, exercise_id_2, 3)
     )
+    # Immediately save the superset pairing
+    if exercise_id_1:
+        cursor.execute("DELETE FROM supersets WHERE split_day_id = ? AND exercise_id_1 = ?", (day_id, exercise_id_1))
+        cursor.execute(
+            "INSERT INTO supersets (split_day_id, exercise_id_1, exercise_id_2) VALUES (?, ?, ?)",
+            (day_id, exercise_id_1, exercise_id_2)
+        )
     conn.commit()
     conn.close()
     return redirect(url_for("log_day", split_id=split_id, day_id=day_id))

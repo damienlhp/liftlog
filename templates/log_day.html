@@ -64,7 +64,7 @@
                     {% set paired_id = supersets[exercise.id] %}
                     {% for ex2 in exercises %}
                         {% if ex2.id == paired_id %}
-                            <div style="border-left: 3px solid orange; margin-left:10px; padding-left:10px; margin-top:10px;">
+                            <div style="border-left: 3px solid orange; margin-left:50px; padding-left:15px; margin-top:10px; background:#fffdf7;">
                                 <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
                                 <h3>{{ ex2.name }}</h3>
                                 <p>{{ ex2.muscle_group }}</p>
@@ -200,7 +200,7 @@
 
         function openSupersetPanel() {
             closeMenu();
-            // Build list of other exercises in this day
+            document.getElementById("superset-exercise-id-1").value = currentExerciseId;
             const list = document.getElementById("superset-exercise-list");
             list.innerHTML = "";
             currentExerciseIds.forEach(function(exId) {
@@ -223,23 +223,29 @@
         }
 
         function selectSuperset(pairedExerciseId) {
-            // Add hidden input to form to record this superset pair
             const form = document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']");
-            
-            // Remove existing superset pair for this exercise if any
             const existing = form.querySelector("input[data-superset-for='" + currentExerciseId + "']");
             if (existing) existing.remove();
-
             const input = document.createElement("input");
             input.type = "hidden";
             input.name = "superset_pair";
             input.value = currentExerciseId + "_" + pairedExerciseId;
             input.setAttribute("data-superset-for", currentExerciseId);
             form.appendChild(input);
-
             closeSupersetPanel();
-            // Reload page to show superset visually
-            window.location.reload();
+
+            // Show superset visually without saving to database
+            const parentBlock = document.getElementById("exercise-block-" + currentExerciseId);
+            const pairedBlock = document.getElementById("exercise-block-" + pairedExerciseId);
+            if (pairedBlock) {
+                // Move paired block inside parent with superset styling
+                const supersetWrapper = document.createElement("div");
+                supersetWrapper.style = "border-left: 3px solid orange; margin-left:30px; padding-left:15px; margin-top:10px;";
+                supersetWrapper.innerHTML = '<p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>';
+                supersetWrapper.appendChild(pairedBlock);
+                pairedBlock.style = "";
+                parentBlock.appendChild(supersetWrapper);
+            }
         }
     </script>
     <!-- Superset panel -->
@@ -251,6 +257,7 @@
         <hr>
         <p><strong>Add a custom exercise:</strong></p>
         <form id="superset-custom-form" action="/log/{{ split.id }}/{{ day.id }}/add-superset-exercise" method="POST">
+            <input type="hidden" name="exercise_id_1" id="superset-exercise-id-1" value="">
             <input type="text" name="name" placeholder="Exercise name" required>
             <select name="muscle_group">
                 <option value="Arms">Arms</option>
