@@ -225,6 +225,46 @@
             document.getElementById("modal-overlay").style.display = "none";
         }
 
+        let tempExerciseCounter = -1; // negative IDs = not saved yet
+
+        function addCustomSupersetExercise() {
+            const name = document.getElementById("custom-exercise-name").value.trim();
+            const muscleGroup = document.getElementById("custom-exercise-muscle-group").value;
+            if (!name) {
+                alert("Please enter an exercise name");
+                return;
+            }
+
+            const tempId = tempExerciseCounter;
+            tempExerciseCounter--;
+
+            const parentBlock = document.getElementById("exercise-block-" + currentExerciseId);
+
+            const supersetWrapper = document.createElement("div");
+            supersetWrapper.id = "exercise-block-" + tempId;
+            supersetWrapper.style = "border-left: 3px solid orange; margin-left:50px; padding-left:15px; margin-top:10px; background:#fffdf7;";
+            supersetWrapper.innerHTML = `
+                <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
+                <h3>${name}</h3>
+                <p>${muscleGroup}</p>
+                <div id="sets-${tempId}">
+                    <div>
+                        <label>Set 1</label>
+                        <input type="number" class="weight-input" name="weight_${tempId}_1" placeholder="Weight (${currentUnit})" step="any" required>
+                        <input type="number" name="reps_${tempId}_1" placeholder="Reps" required>
+                        <span class="unit-label">${currentUnit}</span>
+                    </div>
+                </div>
+                <button type="button" onclick="addSet(${tempId}, 1)">+ Add Set</button>
+                <input type="hidden" name="superset_pair" value="${currentExerciseId}_${tempId}">
+                <input type="hidden" name="new_exercise_${tempId}" value="${name}|${muscleGroup}">
+            `;
+            parentBlock.appendChild(supersetWrapper);
+
+            document.getElementById("custom-exercise-name").value = "";
+            closeSupersetPanel();
+        }
+
         function selectSuperset(pairedExerciseId) {
             const form = document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']");
             const existing = form.querySelector("input[data-superset-for='" + currentExerciseId + "']");
@@ -259,10 +299,10 @@
         <ul id="superset-exercise-list" style="list-style:none; padding:0;"></ul>
         <hr>
         <p><strong>Add a custom exercise:</strong></p>
-        <form id="superset-custom-form" action="/log/{{ split.id }}/{{ day.id }}/add-superset-exercise" method="POST">
-            <input type="hidden" name="exercise_id_1" id="superset-exercise-id-1" value="">
-            <input type="text" name="name" placeholder="Exercise name" required>
-            <select name="muscle_group">
+        <div id="superset-custom-form">
+            <input type="hidden" id="superset-exercise-id-1" value="">
+            <input type="text" id="custom-exercise-name" placeholder="Exercise name" required>
+            <select id="custom-exercise-muscle-group">
                 <option value="Arms">Arms</option>
                 <option value="Back">Back</option>
                 <option value="Chest">Chest</option>
@@ -270,8 +310,8 @@
                 <option value="Legs">Legs</option>
                 <option value="Shoulders">Shoulders</option>
             </select>
-            <button type="submit">Add & Select</button>
-        </form>
+            <button type="button" onclick="addCustomSupersetExercise()">Add & Select</button>
+        </div>
         <button type="button" onclick="closeSupersetPanel()" style="margin-top:10px;">Cancel</button>
     </div>
 </body>

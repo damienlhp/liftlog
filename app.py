@@ -249,38 +249,75 @@ def save_day_workout(split_id, day_id):
     date = request.form["date"]
     conn = get_db()
     cursor = conn.cursor()
+
+    # Step 1: create any new exercises added during this session (negative temp IDs)
+    temp_id_map = {}  # maps temp negative id -> real new exercise id
+    for key in request.form:
+        if key.startswith("new_exercise_"):
+            temp_id = key.replace("new_exercise_", "")
+            name, muscle_group = request.form[key].split("|")
+            cursor.execute(
+                "INSERT INTO exercises (name, muscle_group) VALUES (?, ?)",
+                (name, muscle_group)
+            )
+            new_exercise_id = cursor.lastrowid
+            cursor.execute(
+                "INSERT INTO split_exercises (split_day_id, exercise_id, sets_count) VALUES (?, ?, ?)",
+                (day_id, new_exercise_id, 1)
+            )
+            temp_id_map[temp_id] = new_exercise_id
+
+    # Step 2: get all real exercises for this day (including the ones just created)
     cursor.execute("""
         SELECT exercises.* FROM exercises
         JOIN split_exercises ON exercises.id = split_exercises.exercise_id
         WHERE split_exercises.split_day_id = ?
     """, (day_id,))
     exercises = cursor.fetchall()
+    real_exercise_ids = [str(e["id"]) for e in exercises]
+
+    # Step 3: save sets for each exercise — checking both real ids and temp ids
     for exercise in exercises:
         exercise_id = exercise["id"]
+        # Find if this exercise has form data under its real id or a temp id that maps to it
+        form_id = str(exercise_id)
+        for temp_id, real_id in temp_id_map.items():
+            if real_id == exercise_id:
+                form_id = temp_id
+
+        if f"weight_{form_id}_1" not in request.form:
+            continue  # skip exercises with no sets logged (shouldn't normally happen)
+
         cursor.execute(
             "INSERT INTO workout_logs (exercise_id, date) VALUES (?, ?)",
             (exercise_id, date)
         )
         log_id = cursor.lastrowid
         set_number = 1
-        while f"weight_{exercise_id}_{set_number}" in request.form:
-            weight = request.form[f"weight_{exercise_id}_{set_number}"]
-            reps = request.form[f"reps_{exercise_id}_{set_number}"]
+        while f"weight_{form_id}_{set_number}" in request.form:
+            weight = request.form[f"weight_{form_id}_{set_number}"]
+            reps = request.form[f"reps_{form_id}_{set_number}"]
             unit = request.form.get("unit", "lbs")
             cursor.execute(
                 "INSERT INTO sets (log_id, set_number, reps, weight, unit) VALUES (?, ?, ?, ?, ?)",
                 (log_id, set_number, reps, weight, unit)
             )
             set_number += 1
-    # Save supersets
+
+    # Step 4: save supersets, converting any temp ids to their real new ids
     cursor.execute("DELETE FROM supersets WHERE split_day_id = ?", (day_id,))
     superset_pairs = request.form.getlist("superset_pair")
     for pair in superset_pairs:
         ex1, ex2 = pair.split("_")
+        if ex1 in temp_id_map:
+            ex1 = temp_id_map[ex1]
+        if ex2 in temp_id_map:
+            ex2 = temp_id_map[ex2]
         cursor.execute(
             "INSERT INTO supersets (split_day_id, exercise_id_1, exercise_id_2) VALUES (?, ?, ?)",
             (day_id, ex1, ex2)
         )
+
     conn.commit()
     conn.close()
     return redirect(url_for("home"))
@@ -446,32 +483,6 @@ def remove_exercise_from_log(split_id, day_id, split_exercise_id):
     conn.close()
     return redirect(url_for("log_day", split_id=split_id, day_id=day_id))
 
-@app.route("/log/<int:split_id>/<int:day_id>/add-superset-exercise", methods=["POST"])
-def add_superset_exercise(split_id, day_id):
-    name = request.form["name"].title()
-    muscle_group = request.form["muscle_group"]
-    exercise_id_1 = request.form.get("exercise_id_1")
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO exercises (name, muscle_group) VALUES (?, ?)",
-        (name, muscle_group)
-    )
-    exercise_id_2 = cursor.lastrowid
-    cursor.execute(
-        "INSERT INTO split_exercises (split_day_id, exercise_id, sets_count) VALUES (?, ?, ?)",
-        (day_id, exercise_id_2, 3)
-    )
-    # Immediately save the superset pairing
-    if exercise_id_1:
-        cursor.execute("DELETE FROM supersets WHERE split_day_id = ? AND exercise_id_1 = ?", (day_id, exercise_id_1))
-        cursor.execute(
-            "INSERT INTO supersets (split_day_id, exercise_id_1, exercise_id_2) VALUES (?, ?, ?)",
-            (day_id, exercise_id_1, exercise_id_2)
-        )
-    conn.commit()
-    conn.close()
-    return redirect(url_for("log_day", split_id=split_id, day_id=day_id))
 
 if __name__ == "__main__":
     app.run(debug=True)
