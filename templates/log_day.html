@@ -37,21 +37,19 @@
                                     class="weight-input"
                                     name="weight_{{ exercise.id }}_{{ i }}"
                                     value="{{ previous_data[exercise.id]['sets'][i-1]['weight'] }}"
-                                    step="any" required>
+                                    step="any">
                                 <input type="number"
                                     name="reps_{{ exercise.id }}_{{ i }}"
-                                    value="{{ previous_data[exercise.id]['sets'][i-1]['reps'] }}"
-                                    required>
+                                    value="{{ previous_data[exercise.id]['sets'][i-1]['reps'] }}">
                             {% else %}
                                 <input type="number"
                                     class="weight-input"
                                     name="weight_{{ exercise.id }}_{{ i }}"
                                     placeholder="Weight (lbs)"
-                                    step="any" required>
+                                    step="any">
                                 <input type="number"
                                     name="reps_{{ exercise.id }}_{{ i }}"
-                                    placeholder="Reps"
-                                    required>
+                                    placeholder="Reps">
                             {% endif %}
                             <span class="unit-label">{{ last_unit }}</span>
                         </div>
@@ -73,11 +71,11 @@
                                         <div>
                                             <label>Set {{ i }}</label>
                                             {% if previous_data[ex2.id] and previous_data[ex2.id]["sets"]|length >= i %}
-                                                <input type="number" class="weight-input" name="weight_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['weight'] }}" step="any" required>
-                                                <input type="number" name="reps_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['reps'] }}" required>
+                                                <input type="number" class="weight-input" name="weight_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['weight'] }}" step="any">
+                                                <input type="number" name="reps_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['reps'] }}">
                                             {% else %}
-                                                <input type="number" class="weight-input" name="weight_{{ ex2.id }}_{{ i }}" placeholder="Weight ({{ last_unit }})" step="any" required>
-                                                <input type="number" name="reps_{{ ex2.id }}_{{ i }}" placeholder="Reps" required>
+                                                <input type="number" class="weight-input" name="weight_{{ ex2.id }}_{{ i }}" placeholder="Weight ({{ last_unit }})" step="any">
+                                                <input type="number" name="reps_{{ ex2.id }}_{{ i }}" placeholder="Reps">
                                             {% endif %}
                                             <span class="unit-label">{{ last_unit }}</span>
                                         </div>
@@ -142,8 +140,8 @@
             const div = document.createElement("div");
             div.innerHTML = `
                 <label>Set ${count}</label>
-                <input type="number" class="weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="any" required>
-                <input type="number" name="reps_${exerciseId}_${count}" placeholder="Reps" required>
+                <input type="number" class="weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="any">
+                <input type="number" name="reps_${exerciseId}_${count}" placeholder="Reps">
                 <span class="unit-label">${currentUnit}</span>
             `;
             container.appendChild(div);
@@ -250,8 +248,8 @@
                 <div id="sets-${tempId}">
                     <div>
                         <label>Set 1</label>
-                        <input type="number" class="weight-input" name="weight_${tempId}_1" placeholder="Weight (${currentUnit})" step="any" required>
-                        <input type="number" name="reps_${tempId}_1" placeholder="Reps" required>
+                        <input type="number" class="weight-input" name="weight_${tempId}_1" placeholder="Weight (${currentUnit})" step="any">
+                        <input type="number" name="reps_${tempId}_1" placeholder="Reps">
                         <span class="unit-label">${currentUnit}</span>
                     </div>
                 </div>
@@ -301,7 +299,7 @@
         <p><strong>Add a custom exercise:</strong></p>
         <div id="superset-custom-form">
             <input type="hidden" id="superset-exercise-id-1" value="">
-            <input type="text" id="custom-exercise-name" placeholder="Exercise name" required>
+            <input type="text" id="custom-exercise-name" placeholder="Exercise name">
             <select id="custom-exercise-muscle-group">
                 <option value="Arms">Arms</option>
                 <option value="Back">Back</option>
@@ -314,5 +312,35 @@
         </div>
         <button type="button" onclick="closeSupersetPanel()" style="margin-top:10px;">Cancel</button>
     </div>
+    <script>
+        let hasUnsavedChanges = false;
+
+        // Mark changes as unsaved whenever any input changes
+        document.addEventListener("input", function(e) {
+            if (e.target.matches("input[type='number'], input[type='date']")) {
+                hasUnsavedChanges = true;
+            }
+        });
+
+        // Also mark unsaved when sets/exercises/supersets are added (already covered by addSet, addCustomSupersetExercise, selectSuperset since they create inputs, but let's be explicit too)
+        const originalAddSet = addSet;
+        addSet = function(exerciseId, baseCount) {
+            originalAddSet(exerciseId, baseCount);
+            hasUnsavedChanges = true;
+        };
+
+        // Warn before leaving the page if there are unsaved changes
+        window.addEventListener("beforeunload", function(e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = "";
+            }
+        });
+
+        // Don't warn when actually submitting the form (Save Workout clicked)
+        document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").addEventListener("submit", function() {
+            hasUnsavedChanges = false;
+        });
+    </script>  
 </body>
 </html>
