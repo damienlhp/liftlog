@@ -25,7 +25,7 @@
             <button type="button" onclick="setRestDuration(30)" class="rest-duration-btn">0:30</button>
             <button type="button" onclick="setRestDuration(60)" class="rest-duration-btn">1:00</button>
             <button type="button" onclick="setRestDuration(90)" class="rest-duration-btn">1:30</button>
-            <input type="number" id="custom-rest-seconds" placeholder="Custom (seconds)" style="width:140px;">
+            <input type="text" id="custom-rest-seconds" placeholder="m:ss (e.g. 1:30)" style="width:140px;">
             <button type="button" onclick="setCustomRestDuration()">Set</button>
             <span id="selected-rest-duration"></span>
         </div>
@@ -380,9 +380,23 @@
         }
 
         function setCustomRestDuration() {
-            const value = parseInt(document.getElementById("custom-rest-seconds").value);
-            if (value > 0) {
-                setRestDuration(value);
+            const raw = document.getElementById("custom-rest-seconds").value.trim();
+
+            if (raw.includes(":")) {
+                // Format like "1:30" or "0:15"
+                const parts = raw.split(":");
+                const minutes = parseInt(parts[0]) || 0;
+                const seconds = parseInt(parts[1]) || 0;
+                const totalSeconds = (minutes * 60) + seconds;
+                if (totalSeconds > 0) {
+                    setRestDuration(totalSeconds);
+                }
+            } else {
+                // Just a plain number, treat as seconds
+                const value = parseInt(raw);
+                if (value > 0) {
+                    setRestDuration(value);
+                }
             }
         }
 
