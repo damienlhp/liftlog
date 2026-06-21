@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log Workout - LiftLog</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 </head>
 <body>
     <h1>{{ split.name }} — {{ day.day_name }}</h1>
@@ -35,9 +36,12 @@
         <input type="date" name="date" required>
 
         {% set all_exercise_ids = exercises | map(attribute='id') | list %}
+        <div id="sortable-exercises" data-split-id="{{ split.id }}">
         {% for exercise in exercises %}
             {% if exercise.id not in supersets.values() %}
-            <div id="exercise-block-{{ exercise.id }}">
+            <div id="exercise-block-{{ exercise.id }}" data-split-exercise-id="{{ exercise.split_exercise_id }}" styl="cursor:grab;">
+                <span class="drag-handle" style="color:gray; cursor:grab;">☰</span>
+
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h3>{{ exercise.name }}</h3>
                     <button type="button" onclick="openMenu({{ exercise.id }}, '{{ exercise.name }}', {{ exercise.split_exercise_id }}, {{ all_exercise_ids | tojson }})">⋯</button>
@@ -108,6 +112,7 @@
             </div>
     {% endif %}
         {% endfor %}
+        </div>
 
         <input type="hidden" name="unit" id="unit-input" value="{{ last_unit }}">
         <button type="submit">Save Workout</button>
@@ -439,6 +444,26 @@
                 }
             }, 1000);
         }
-</script>
+    </script>
+
+    <script>
+        const sortableExercises = document.getElementById("sortable-exercises");
+        new Sortable(sortableExercises, {
+            animation: 150,
+            handle: ".drag-handle",
+            onEnd: function() {
+                const splitExerciseIds = Array.from(sortableExercises.children).map(function(div) {
+                    return div.getAttribute("data-split-exercise-id");
+                });
+                const splitId = sortableExercises.getAttribute("data-split-id");
+
+                fetch("/split/" + splitId + "/reorder-exercises", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ order: splitExerciseIds })
+                });
+            }
+        });
+    </script>
 </body>
 </html>
