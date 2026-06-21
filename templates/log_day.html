@@ -15,6 +15,22 @@
         <input type="hidden" id="selected-unit" name="unit" value="lbs">
     </div>
 
+    <!-- Rest timer settings -->
+    <div>
+        <label>
+            <input type="checkbox" id="rest-timer-toggle" onchange="toggleRestTimerOptions()">
+            Rest Timer
+        </label>
+        <div id="rest-timer-options" style="display:none;">
+            <button type="button" onclick="setRestDuration(30)" class="rest-duration-btn">0:30</button>
+            <button type="button" onclick="setRestDuration(60)" class="rest-duration-btn">1:00</button>
+            <button type="button" onclick="setRestDuration(90)" class="rest-duration-btn">1:30</button>
+            <input type="number" id="custom-rest-seconds" placeholder="Custom (seconds)" style="width:140px;">
+            <button type="button" onclick="setCustomRestDuration()">Set</button>
+            <span id="selected-rest-duration"></span>
+        </div>
+    </div>
+
     <form action="/log/{{ split.id }}/{{ day.id }}" method="POST">
         <input type="date" name="date" required>
 
@@ -29,32 +45,34 @@
                 <p>{{ exercise.muscle_group }}</p>
 
                 <div id="sets-{{ exercise.id }}">
-                    {% for i in range(1, exercise.sets_count + 1) %}
-                        <div>
-                            <label>Set {{ i }}</label>
-                            {% if previous_data[exercise.id] and previous_data[exercise.id]["sets"]|length >= i %}
-                                <input type="number"
-                                    class="weight-input"
-                                    name="weight_{{ exercise.id }}_{{ i }}"
-                                    value="{{ previous_data[exercise.id]['sets'][i-1]['weight'] }}"
-                                    step="any">
-                                <input type="number"
-                                    name="reps_{{ exercise.id }}_{{ i }}"
-                                    value="{{ previous_data[exercise.id]['sets'][i-1]['reps'] }}">
-                            {% else %}
-                                <input type="number"
-                                    class="weight-input"
-                                    name="weight_{{ exercise.id }}_{{ i }}"
-                                    placeholder="Weight (lbs)"
-                                    step="any">
-                                <input type="number"
-                                    name="reps_{{ exercise.id }}_{{ i }}"
-                                    placeholder="Reps">
-                            {% endif %}
-                            <span class="unit-label">{{ last_unit }}</span>
-                        </div>
-                    {% endfor %}
-                </div>
+                        {% for i in range(1, exercise.sets_count + 1) %}
+                            <div>
+                                <label>Set {{ i }}</label>
+                                {% if previous_data[exercise.id] and previous_data[exercise.id]["sets"]|length >= i %}
+                                    <input type="number"
+                                        class="weight-input"
+                                        name="weight_{{ exercise.id }}_{{ i }}"
+                                        value="{{ previous_data[exercise.id]['sets'][i-1]['weight'] }}"
+                                        step="any">
+                                    <input type="number"
+                                        name="reps_{{ exercise.id }}_{{ i }}"
+                                        value="{{ previous_data[exercise.id]['sets'][i-1]['reps'] }}">
+                                {% else %}
+                                    <input type="number"
+                                        class="weight-input"
+                                        name="weight_{{ exercise.id }}_{{ i }}"
+                                        placeholder="Weight (lbs)"
+                                        step="any">
+                                    <input type="number"
+                                        name="reps_{{ exercise.id }}_{{ i }}"
+                                        placeholder="Reps">
+                                {% endif %}
+                                <span class="unit-label">{{ last_unit }}</span>
+                                <button type="button" onclick="markSetDone(this)">✓</button>
+                                <div class="rest-countdown"></div>
+                            </div>
+                        {% endfor %}
+                    </div> 
 
                 <button type="button" onclick="addSet({{ exercise.id }}, {{ exercise.sets_count }})">+ Add Set</button>
 
@@ -143,6 +161,8 @@
                 <input type="number" class="weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="any">
                 <input type="number" name="reps_${exerciseId}_${count}" placeholder="Reps">
                 <span class="unit-label">${currentUnit}</span>
+                <button type="button" onclick="markSetDone(this)">✓</button>
+                <div class="rest-countdown"></div>
             `;
             container.appendChild(div);
         }
@@ -341,6 +361,67 @@
         document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").addEventListener("submit", function() {
             hasUnsavedChanges = false;
         });
-    </script>  
+    </script>
+    
+    <script>
+        let restTimerEnabled = false;
+        let restDuration = 60; // default 60 seconds
+        let activeTimers = {}; // tracks running intervals so we can clear them
+
+        function toggleRestTimerOptions() {
+            restTimerEnabled = document.getElementById("rest-timer-toggle").checked;
+            document.getElementById("rest-timer-options").style.display = restTimerEnabled ? "block" : "none";
+        }
+
+        function setRestDuration(seconds) {
+            restDuration = seconds;
+            document.getElementById("selected-rest-duration").textContent = "Selected: " + formatTime(seconds);
+        }
+
+        function setCustomRestDuration() {
+            const value = parseInt(document.getElementById("custom-rest-seconds").value);
+            if (value > 0) {
+                setRestDuration(value);
+            }
+        }
+
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        }
+
+        function markSetDone(button) {
+            if (!restTimerEnabled) return;
+
+            const setRow = button.parentElement;
+            const countdownDiv = setRow.querySelector(".rest-countdown");
+
+            let timerId = "timer-" + Math.random().toString(36).slice(2);
+
+            // Clear any existing timer on this set
+            if (activeTimers[timerId]) {
+                clearInterval(activeTimers[timerId]);
+            }
+
+            let remaining = restDuration;
+            countdownDiv.textContent = "Rest: " + formatTime(remaining);
+
+            const interval = setInterval(function() {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    countdownDiv.textContent = "Rest complete!";
+                    setTimeout(function() {
+                        countdownDiv.textContent = "";
+                    }, 3000);
+                } else {
+                    countdownDiv.textContent = "Rest: " + formatTime(remaining);
+                }
+            }, 1000);
+
+            activeTimers[timerId] = interval;
+        }
+</script>
 </body>
 </html>
