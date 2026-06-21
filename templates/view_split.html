@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ split.name }} - LiftLog</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 </head>
 <body>
     <h1>{{ split.name }}</h1>
@@ -14,10 +15,10 @@
         {% for day in days %}
             <div>
                 <h3>Day {{ day.day_order }}: {{ day.day_name }}</h3>
-                <ul>
+                <ul class="sortable-list" data-split-id="{{ split.id }}">
                     {% for exercise in day.exercises %}
-                        <li>
-                            {{ exercise.name }} - {{ exercise.muscle_group }} — {{ exercise.sets_count }} sets
+                        <li data-split-exercise-id="{{ exercise.split_exercise_id }}" style="cursor:grab; border:1px solid #ccc; padding:8px; margin-bottom:4px; background:white;">
+                            ☰ {{ exercise.name }} - {{ exercise.muscle_group }} — {{ exercise.sets_count }} sets
                             <form action="/split/{{ split.id }}/remove-exercise/{{ day.id }}/{{ exercise.split_exercise_id }}" method="POST" style="display:inline">
                                 <button type="submit">Remove</button>
                             </form>
@@ -37,5 +38,28 @@
         <input type="text" name="day_name" placeholder="e.g. Push, Pull, Legs, Chest Day" required>
         <button type="submit">Add Day</button>
     </form>
+
+    <script>
+        // Turn every exercise list into a draggable, sortable list
+        document.querySelectorAll(".sortable-list").forEach(function(list) {
+            new Sortable(list, {
+                animation: 150,
+                onEnd: function() {
+                    // Build the new order from the list's current DOM order
+                    const splitExerciseIds = Array.from(list.children).map(function(li) {
+                        return li.getAttribute("data-split-exercise-id");
+                    });
+
+                    const splitId = list.getAttribute("data-split-id");
+
+                    fetch("/split/" + splitId + "/reorder-exercises", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ order: splitExerciseIds })
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>

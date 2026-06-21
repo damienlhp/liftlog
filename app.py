@@ -81,6 +81,7 @@ def view_split(split_id):
             FROM exercises
             JOIN split_exercises ON exercises.id = split_exercises.exercise_id
             WHERE split_exercises.split_day_id = ?
+            ORDER BY split_exercises.exercise_order
         """, (day["id"],))
         day_exercises = cursor.fetchall()
         days_with_exercises.append({
@@ -483,6 +484,20 @@ def remove_exercise_from_log(split_id, day_id, split_exercise_id):
     conn.close()
     return redirect(url_for("log_day", split_id=split_id, day_id=day_id))
 
+@app.route("/split/<int:split_id>/reorder-exercises", methods=["POST"])
+def reorder_exercises(split_id):
+    data = request.get_json()
+    split_exercise_ids = data.get("order", [])
+    conn = get_db()
+    cursor = conn.cursor()
+    for index, split_exercise_id in enumerate(split_exercise_ids):
+        cursor.execute(
+            "UPDATE split_exercises SET exercise_order = ? WHERE id = ?",   
+            (index, split_exercise_id)
+        )
+    conn.commit()
+    conn.close()
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     app.run(debug=True)
