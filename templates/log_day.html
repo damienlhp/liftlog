@@ -366,7 +366,8 @@
     <script>
         let restTimerEnabled = false;
         let restDuration = 60; // default 60 seconds
-        let activeTimers = {}; // tracks running intervals so we can clear them
+        let activeInterval = null; // the one currently running timer
+        let activeCountdownDiv = null; // which set's countdown box is showing it
 
         function toggleRestTimerOptions() {
             restTimerEnabled = document.getElementById("rest-timer-toggle").checked;
@@ -397,30 +398,32 @@
             const setRow = button.parentElement;
             const countdownDiv = setRow.querySelector(".rest-countdown");
 
-            let timerId = "timer-" + Math.random().toString(36).slice(2);
-
-            // Clear any existing timer on this set
-            if (activeTimers[timerId]) {
-                clearInterval(activeTimers[timerId]);
+            // Stop whichever timer is currently running, anywhere on the page
+            if (activeInterval) {
+                clearInterval(activeInterval);
+                if (activeCountdownDiv) {
+                    activeCountdownDiv.textContent = "";
+                }
             }
 
             let remaining = restDuration;
             countdownDiv.textContent = "Rest: " + formatTime(remaining);
+            activeCountdownDiv = countdownDiv;
 
-            const interval = setInterval(function() {
+            activeInterval = setInterval(function() {
                 remaining--;
                 if (remaining <= 0) {
-                    clearInterval(interval);
+                    clearInterval(activeInterval);
                     countdownDiv.textContent = "Rest complete!";
                     setTimeout(function() {
                         countdownDiv.textContent = "";
                     }, 3000);
+                    activeInterval = null;
+                    activeCountdownDiv = null;
                 } else {
                     countdownDiv.textContent = "Rest: " + formatTime(remaining);
                 }
             }, 1000);
-
-            activeTimers[timerId] = interval;
         }
 </script>
 </body>
