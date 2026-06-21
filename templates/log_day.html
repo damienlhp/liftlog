@@ -39,13 +39,12 @@
         <div id="sortable-exercises" data-split-id="{{ split.id }}">
         {% for exercise in exercises %}
             {% if exercise.id not in supersets.values() %}
-            <div id="exercise-block-{{ exercise.id }}" data-split-exercise-id="{{ exercise.split_exercise_id }}" styl="cursor:grab;">
-                <span class="drag-handle" style="color:gray; cursor:grab;">☰</span>
-
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>{{ exercise.name }}</h3>
-                    <button type="button" onclick="openMenu({{ exercise.id }}, '{{ exercise.name }}', {{ exercise.split_exercise_id }}, {{ all_exercise_ids | tojson }})">⋯</button>
-                </div>
+            <div id="exercise-block-{{ exercise.id }}" data-split-exercise-id="{{ exercise.split_exercise_id }}">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span class="drag-handle" style="color:gray; cursor:grab; margin-right:8px;">☰</span>
+                                <h3 style="flex:1;">{{ exercise.name }}</h3>
+                                <button type="button" onclick="openMenu({{ exercise.id }}, '{{ exercise.name }}', {{ exercise.split_exercise_id }}, {{ all_exercise_ids | tojson }})">⋯</button>
+                            </div>
                 <p>{{ exercise.muscle_group }}</p>
 
                 <div id="sets-{{ exercise.id }}">
