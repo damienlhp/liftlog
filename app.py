@@ -18,8 +18,19 @@ def home():
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM workout_splits ORDER BY id")
     splits = cursor.fetchall()
+
+    # Get all workout dates from the last 2 weeks
+    from datetime import date, timedelta
+    today = date.today()
+    two_weeks_ago = today - timedelta(days=13)
+    cursor.execute("""
+        SELECT DISTINCT date FROM workout_logs
+        WHERE date >= ? AND date <= ?
+        ORDER BY date
+    """, (two_weeks_ago.isoformat(), today.isoformat()))
+    workout_dates = [row["date"] for row in cursor.fetchall()]
     conn.close()
-    return render_template("index.html", splits=splits)
+    return render_template("index.html", splits=splits, workout_dates=workout_dates, today=today.isoformat(), two_weeks_ago=two_weeks_ago.isoformat())
 
 @app.route("/exercises")
 def exercises():
@@ -32,15 +43,19 @@ def exercises():
 
 @app.route("/add-exercise", methods=["POST"])
 def add_exercise():
-    name = request.form["name"]
+    name = request.form["name"].title()
     muscle_group = request.form["muscle_group"]
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO exercises (name, muscle_group) VALUES (?, ?)",
-        (name, muscle_group)
-    )
-    conn.commit()
+    # Only insert if exercise name doesn't already exist
+    cursor.execute("SELECT id FROM exercises WHERE name = ?", (name,))
+    existing = cursor.fetchone()
+    if not existing:
+        cursor.execute(
+            "INSERT INTO exercises (name, muscle_group) VALUES (?, ?)",
+            (name, muscle_group)
+        )
+        conn.commit()
     conn.close()
     return redirect(url_for("exercises"))
 
