@@ -36,7 +36,10 @@
     </div>
 
     <form action="/log/{{ split.id }}/{{ day.id }}" method="POST">
-        <input type="date" name="date" required>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <input type="date" name="date" required>
+            <button type="submit">Save Workout</button>
+        </div>
 
         {% set all_exercise_ids = exercises | map(attribute='id') | list %}
         <div id="sortable-exercises" data-split-id="{{ split.id }}">
@@ -120,7 +123,6 @@
         </div>
 
         <input type="hidden" name="unit" id="unit-input" value="{{ last_unit }}">
-        <button type="submit">Save Workout</button>
     </form>
 
     <script>
