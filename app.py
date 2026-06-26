@@ -191,8 +191,60 @@ def pick_day(split_id):
         (split_id,)
     )
     days = cursor.fetchall()
+
+    # Build preview data for each day
+    days_preview = []
+    for day in days:
+        cursor.execute("""
+            SELECT exercises.*, split_exercises.sets_count
+            FROM exercises
+            JOIN split_exercises ON exercises.id = split_exercises.exercise_id
+            WHERE split_exercises.split_day_id = ?
+            ORDER BY split_exercises.exercise_order
+        """, (day["id"],))
+        exercises = cursor.fetchall()
+
+        exercise_previews = []
+        total_sets = 0
+        for exercise in exercises:
+            # Get last session's sets x reps
+            cursor.execute("""
+                SELECT workout_logs.id FROM workout_logs
+                WHERE workout_logs.exercise_id = ?
+                ORDER BY workout_logs.date DESC LIMIT 1
+            """, (exercise["id"],))
+            last_log = cursor.fetchone()
+
+            if last_log:
+                cursor.execute("""
+                    SELECT COUNT(*) as set_count, ROUND(AVG(reps)) as avg_reps
+                    FROM sets WHERE log_id = ?
+                """, (last_log["id"],))
+                stats = cursor.fetchone()
+                sets = stats["set_count"]
+                reps = stats["avg_reps"] or 10
+            else:
+                sets = 1
+                reps = 10
+
+            total_sets += sets
+            exercise_previews.append({
+                "name": exercise["name"],
+                "sets": sets,
+                "reps": int(reps)
+            })
+
+        days_preview.append({
+            "id": day["id"],
+            "day_name": day["day_name"],
+            "day_order": day["day_order"],
+            "exercises": exercise_previews,
+            "total_sets": total_sets,
+            "total_exercises": len(exercise_previews)
+        })
+
     conn.close()
-    return render_template("pick_day.html", split=split, days=days)
+    return render_template("pick_day.html", split=split, days=days_preview)
 
 @app.route("/log/<int:split_id>/<int:day_id>")
 def log_day(split_id, day_id):

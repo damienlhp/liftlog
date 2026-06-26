@@ -7,7 +7,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 </head>
 <body>
-    <h1>{{ split.name }} — {{ day.day_name }}</h1>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h1>{{ split.name }} — {{ day.day_name }}</h1>
+        <div id="workout-timer" style="font-size:1.2em; font-weight:bold; color:gray;">00:00</div>
+    </div>
     <a href="/">Back to Home</a>
 
     <!-- Unit toggle -->
@@ -500,6 +503,26 @@
 
             hasUnsavedChanges = true;
         }
+    </script>
+
+    <script>
+        // Start elapsed timer when page loads
+        let workoutSeconds = 0;
+        const timerDisplay = document.getElementById("workout-timer");
+
+        const workoutTimer = setInterval(function() {
+            workoutSeconds++;
+            const minutes = Math.floor(workoutSeconds / 60);
+            const seconds = workoutSeconds % 60;
+            timerDisplay.textContent = 
+                (minutes < 10 ? "0" : "") + minutes + ":" + 
+                (seconds < 10 ? "0" : "") + seconds;
+        }, 1000);
+
+        // Stop timer when Save Workout is clicked
+        document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").addEventListener("submit", function() {
+            clearInterval(workoutTimer);
+        });
     </script>
 </body>
 </html>

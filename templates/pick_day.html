@@ -4,6 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pick a Day - LiftLog</title>
+    <style>
+        .day-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .day-card:hover {
+            background: #f5f5f5;
+        }
+
+        /* Modal overlay */
+        #preview-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        /* Slide-up modal */
+        #preview-modal {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            border-radius: 16px 16px 0 0;
+            padding: 24px;
+            z-index: 1000;
+            max-height: 85vh;
+            overflow-y: auto;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        #preview-modal.open {
+            transform: translateY(0);
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        .preview-stats {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+        .stat-box {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .stat-label {
+            color: gray;
+            font-size: 0.85em;
+        }
+        .exercise-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .exercise-row:last-child {
+            border-bottom: none;
+        }
+        .sets-reps {
+            color: gray;
+        }
+        #start-workout-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            margin-top: 20px;
+            background: black;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #start-workout-btn:hover {
+            background: #333;
+        }
+    </style>
 </head>
 <body>
     <h1>{{ split.name }}</h1>
@@ -12,15 +104,93 @@
 
     {% if days %}
         {% for day in days %}
-            <div>
-                <a href="/log/{{ split.id }}/{{ day.id }}">
-                    Day {{ day.day_order }}: {{ day.day_name }}
-                </a>
+            <div class="day-card" onclick="openPreview({{ loop.index0 }})">
+                <strong>Day {{ day.day_order }}: {{ day.day_name }}</strong>
+                <span style="color:gray; font-size:0.85em; margin-left:10px;">{{ day.total_exercises }} exercises</span>
             </div>
         {% endfor %}
     {% else %}
         <p>No days in this split yet.</p>
         <a href="/split/{{ split.id }}">Add days to this split</a>
     {% endif %}
+
+    <!-- Overlay -->
+    <div id="preview-overlay" onclick="closePreview()"></div>
+
+    <!-- Slide-up modal -->
+    <div id="preview-modal">
+        <div class="preview-header">
+            <div>
+                <p style="color:gray; margin:0; font-size:0.85em;">{{ split.name }}</p>
+                <h2 id="preview-day-name" style="margin:4px 0;"></h2>
+            </div>
+            <button onclick="closePreview()" style="background:none; border:none; font-size:1.5em; cursor:pointer;">✕</button>
+        </div>
+
+        <div class="preview-stats">
+            <div class="stat-box">
+                <div class="stat-number" id="preview-total-sets"></div>
+                <div class="stat-label">sets</div>
+            </div>
+            <div style="border-left:1px solid #eee;"></div>
+            <div class="stat-box">
+                <div class="stat-number" id="preview-total-exercises"></div>
+                <div class="stat-label">exercises</div>
+            </div>
+        </div>
+
+        <div id="preview-exercise-list"></div>
+
+        <button id="start-workout-btn" onclick="startWorkout()">Start Workout</button>
+    </div>
+
+    <script>
+        // Pass all days data from Flask into JavaScript
+        const daysData = {{ days | tojson }};
+        let selectedDayId = null;
+        let selectedSplitId = {{ split.id }};
+
+        function openPreview(index) {
+            const day = daysData[index];
+            selectedDayId = day.id;
+
+            // Fill in the modal content
+            document.getElementById("preview-day-name").textContent = day.day_name;
+            document.getElementById("preview-total-sets").textContent = day.total_sets;
+            document.getElementById("preview-total-exercises").textContent = day.total_exercises;
+
+            // Build exercise list
+            const list = document.getElementById("preview-exercise-list");
+            list.innerHTML = "";
+            day.exercises.forEach(function(exercise, i) {
+                const row = document.createElement("div");
+                row.className = "exercise-row";
+                row.innerHTML = `
+                    <span><strong>${i + 1}</strong>&nbsp;&nbsp;${exercise.name}</span>
+                    <span class="sets-reps">${exercise.sets} x ${exercise.reps}</span>
+                `;
+                list.appendChild(row);
+            });
+
+            // Show modal with slide-up animation
+            document.getElementById("preview-overlay").style.display = "block";
+            document.getElementById("preview-modal").style.display = "block";
+            setTimeout(function() {
+                document.getElementById("preview-modal").classList.add("open");
+            }, 10);
+        }
+
+        function closePreview() {
+            document.getElementById("preview-modal").classList.remove("open");
+            setTimeout(function() {
+                document.getElementById("preview-modal").style.display = "none";
+                document.getElementById("preview-overlay").style.display = "none";
+            }, 300);
+        }
+
+        function startWorkout() {
+            window.location.href = "/log/" + selectedSplitId + "/" + selectedDayId;
+        }
+    </script>
 </body>
 </html>
