@@ -11,7 +11,7 @@
         <h1>{{ split.name }} — {{ day.day_name }}</h1>
         <div id="workout-timer" style="font-size:1.2em; font-weight:bold; color:gray;">00:00</div>
     </div>
-    <a href="/">Back to Home</a>
+    <a href="#" onclick="showLeaveModal(); return false;">Back to Home</a>
 
     <!-- Unit toggle -->
     <div>
@@ -505,6 +505,54 @@
 
             hasUnsavedChanges = true;
         }
+    </script>
+
+    <!-- Leave workout modal -->
+    <div id="leave-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000;" onclick="closeLeaveModal()"></div>
+
+    <div id="leave-modal" style="display:none; position:fixed; bottom:0; left:0; right:0; background:white; border-radius:16px 16px 0 0; padding:24px; z-index:2001; transform:translateY(100%); transition:transform 0.3s ease;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h3 style="margin:0;">Leave Workout?</h3>
+            <button onclick="closeLeaveModal()" style="background:none; border:none; font-size:1.3em; cursor:pointer; color:gray;">✕</button>
+        </div>
+        <p style="color:gray; margin-top:4px; margin-bottom:24px;">Your progress hasn't been saved.</p>
+        <button onclick="discardWorkout()" style="display:block; width:100%; padding:14px; margin-bottom:10px; background:none; border:2px solid red; border-radius:30px; color:red; font-size:1em; font-weight:bold; cursor:pointer;">Discard Workout</button>
+        <button onclick="saveAndExit()" style="display:block; width:100%; padding:14px; background:black; border:none; border-radius:30px; color:white; font-size:1em; font-weight:bold; cursor:pointer;">Save & Exit</button>
+    </div>
+
+    <script>
+        function showLeaveModal() {
+            document.getElementById("leave-overlay").style.display = "block";
+            document.getElementById("leave-modal").style.display = "block";
+            setTimeout(function() {
+                document.getElementById("leave-modal").style.transform = "translateY(0)";
+            }, 10);
+        }
+
+        function closeLeaveModal() {
+            document.getElementById("leave-modal").style.transform = "translateY(100%)";
+            setTimeout(function() {
+                document.getElementById("leave-modal").style.display = "none";
+                document.getElementById("leave-overlay").style.display = "none";
+            }, 300);
+        }
+
+        function discardWorkout() {
+            hasUnsavedChanges = false;
+            window.location.href = "/";
+        }
+
+        function saveAndExit() {
+            hasUnsavedChanges = false;
+            document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").submit();
+        }
+
+        // Intercept browser back button
+        history.pushState(null, "", window.location.href);
+        window.addEventListener("popstate", function() {
+            showLeaveModal();
+            history.pushState(null, "", window.location.href);
+        });
     </script>
 
     <script>
