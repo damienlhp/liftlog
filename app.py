@@ -218,6 +218,7 @@ def log_day(split_id, day_id):
     """, (day_id,))
     superset_rows = cursor.fetchall()
     supersets = {row["exercise_id_1"]: row["exercise_id_2"] for row in superset_rows}
+    superset_is_custom = {row["exercise_id_1"]: row["is_custom_superset"] for row in superset_rows}
 
     for exercise in exercises:
         cursor.execute("""
@@ -243,7 +244,7 @@ def log_day(split_id, day_id):
             if sets:
                 last_unit = sets[0]["unit"]
     conn.close()
-    return render_template("log_day.html", split=split, day=day, exercises=exercises, previous_data=previous_data, last_unit=last_unit, supersets=supersets)
+    return render_template("log_day.html", split=split, day=day, exercises=exercises, previous_data=previous_data, last_unit=last_unit, supersets=supersets, superset_is_custom=superset_is_custom)
 
 @app.route("/log/<int:split_id>/<int:day_id>", methods=["POST"])
 def save_day_workout(split_id, day_id):
@@ -305,18 +306,31 @@ def save_day_workout(split_id, day_id):
             )
             set_number += 1
 
-    # Step 4: save supersets, converting any temp ids to their real new ids
+    # Step 4: handle explicitly deleted supersets first
+    deleted_supersets = request.form.getlist("deleted_superset")
+    for exercise_id_1 in deleted_supersets:
+        cursor.execute("SELECT * FROM supersets WHERE split_day_id = ? AND exercise_id_1 = ?", (day_id, exercise_id_1))
+        superset = cursor.fetchone()
+        if superset:
+            if superset["is_custom_superset"] == 1:
+                cursor.execute("DELETE FROM split_exercises WHERE exercise_id = ? AND split_day_id = ?", (superset["exercise_id_2"], day_id))
+                cursor.execute("DELETE FROM exercises WHERE id = ?", (superset["exercise_id_2"],))
+            cursor.execute("DELETE FROM supersets WHERE split_day_id = ? AND exercise_id_1 = ?", (day_id, exercise_id_1))
+
+    # Save remaining supersets, converting any temp ids to their real new ids
     cursor.execute("DELETE FROM supersets WHERE split_day_id = ?", (day_id,))
     superset_pairs = request.form.getlist("superset_pair")
     for pair in superset_pairs:
         ex1, ex2 = pair.split("_")
+        # Check if ex2 was a newly added custom exercise (was a temp negative id)
+        is_custom = 1 if ex2 in temp_id_map else 0
         if ex1 in temp_id_map:
             ex1 = temp_id_map[ex1]
         if ex2 in temp_id_map:
             ex2 = temp_id_map[ex2]
         cursor.execute(
-            "INSERT INTO supersets (split_day_id, exercise_id_1, exercise_id_2) VALUES (?, ?, ?)",
-            (day_id, ex1, ex2)
+            "INSERT INTO supersets (split_day_id, exercise_id_1, exercise_id_2, is_custom_superset) VALUES (?, ?, ?, ?)",
+            (day_id, ex1, ex2, is_custom)
         )
 
     conn.commit()
@@ -498,6 +512,38 @@ def reorder_exercises(split_id):
     conn.commit()
     conn.close()
     return {"status": "ok"}
+
+@app.route("/log/<int:split_id>/<int:day_id>/remove-superset/<int:exercise_id_1>", methods=["POST"])
+def remove_superset(split_id, day_id, exercise_id_1):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Find the superset row first
+    cursor.execute("""
+        SELECT * FROM supersets WHERE split_day_id = ? AND exercise_id_1 = ?
+    """, (day_id, exercise_id_1))
+    superset = cursor.fetchone()
+
+    if superset:
+        if superset["is_custom_superset"] == 1:
+            # Case 2: custom exercise — delete from split_exercises and exercises entirely
+            cursor.execute(
+                "DELETE FROM split_exercises WHERE exercise_id = ? AND split_day_id = ?",
+                (superset["exercise_id_2"], day_id)
+            )
+            cursor.execute(
+                "DELETE FROM exercises WHERE id = ?",
+                (superset["exercise_id_2"],)
+            )
+        # Both cases: delete the superset pair itself
+        cursor.execute(
+            "DELETE FROM supersets WHERE split_day_id = ? AND exercise_id_1 = ?",
+            (day_id, exercise_id_1)
+        )
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for("log_day", split_id=split_id, day_id=day_id))
 
 if __name__ == "__main__":
     app.run(debug=True)

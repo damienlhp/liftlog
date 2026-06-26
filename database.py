@@ -62,6 +62,7 @@ def init_db():
             split_day_id INTEGER NOT NULL,
             exercise_id_1 INTEGER NOT NULL,
             exercise_id_2 INTEGER NOT NULL,
+            is_custom_superset INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (split_day_id) REFERENCES split_days(id),
             FOREIGN KEY (exercise_id_1) REFERENCES exercises(id),
             FOREIGN KEY (exercise_id_2) REFERENCES exercises(id)

@@ -84,7 +84,10 @@
                     {% for ex2 in exercises %}
                         {% if ex2.id == paired_id %}
                             <div style="border-left: 3px solid orange; margin-left:50px; padding-left:15px; margin-top:10px; background:#fffdf7;">
-                                <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
+                                    <button type="button" onclick="removeSuperset({{ exercise.id }})" style="background:none; border:none; cursor:pointer; color:red; font-size:1em;">✕</button>
+                                </div>
                                 <h3>{{ ex2.name }}</h3>
                                 <p>{{ ex2.muscle_group }}</p>
                                 <div id="sets-{{ ex2.id }}">
@@ -266,7 +269,10 @@
             supersetWrapper.id = "exercise-block-" + tempId;
             supersetWrapper.style = "border-left: 3px solid orange; margin-left:50px; padding-left:15px; margin-top:10px; background:#fffdf7;";
             supersetWrapper.innerHTML = `
-                <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
+                    <button type="button" onclick="removeSuperset(${currentExerciseId})" style="background:none; border:none; cursor:pointer; color:red; font-size:1em;">✕</button>
+                </div>
                 <h3>${name}</h3>
                 <p>${muscleGroup}</p>
                 <div id="sets-${tempId}">
@@ -284,6 +290,7 @@
             parentBlock.appendChild(supersetWrapper);
 
             document.getElementById("custom-exercise-name").value = "";
+            hasUnsavedChanges = true;
             closeSupersetPanel();
         }
 
@@ -303,14 +310,19 @@
             const parentBlock = document.getElementById("exercise-block-" + currentExerciseId);
             const pairedBlock = document.getElementById("exercise-block-" + pairedExerciseId);
             if (pairedBlock) {
-                // Move paired block inside parent with superset styling
                 const supersetWrapper = document.createElement("div");
-                supersetWrapper.style = "border-left: 3px solid orange; margin-left:30px; padding-left:15px; margin-top:10px;";
-                supersetWrapper.innerHTML = '<p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>';
+                supersetWrapper.style = "border-left: 3px solid orange; margin-left:50px; padding-left:15px; margin-top:10px; background:#fffdf7;";
+                supersetWrapper.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
+                        <button type="button" onclick="removeSuperset(${currentExerciseId})" style="background:none; border:none; cursor:pointer; color:red; font-size:1em;">✕</button>
+                    </div>
+                `;
+                pairedBlock.style = "background:transparent;";
                 supersetWrapper.appendChild(pairedBlock);
-                pairedBlock.style = "";
                 parentBlock.appendChild(supersetWrapper);
             }
+            hasUnsavedChanges = true;
         }
     </script>
     <!-- Superset panel -->
@@ -361,9 +373,11 @@
             }
         });
 
-        // Don't warn when actually submitting the form (Save Workout clicked)
-        document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").addEventListener("submit", function() {
-            hasUnsavedChanges = false;
+        // Don't warn when any form on this page submits
+        document.querySelectorAll("form").forEach(function(form) {
+            form.addEventListener("submit", function() {
+                hasUnsavedChanges = false;
+            });
         });
     </script>
     
@@ -463,6 +477,29 @@
                 });
             }
         });
+    </script>
+
+    <script>
+        function removeSuperset(exerciseId) {
+            if (!confirm('Remove this superset?')) return;
+
+            // Find and remove the superset block visually
+            const parentBlock = document.getElementById("exercise-block-" + exerciseId);
+            const supersetDiv = parentBlock.querySelector("div[style*='border-left: 3px solid orange']");
+            if (supersetDiv) {
+                supersetDiv.remove();
+            }
+
+            // Track this deletion in the form so it saves when Save Workout is clicked
+            const form = document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']");
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "deleted_superset";
+            input.value = exerciseId;
+            form.appendChild(input);
+
+            hasUnsavedChanges = true;
+        }
     </script>
 </body>
 </html>
