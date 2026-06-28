@@ -612,5 +612,46 @@ def remove_superset(split_id, day_id, exercise_id_1):
     conn.close()
     return redirect(url_for("log_day", split_id=split_id, day_id=day_id))
 
+@app.route("/calendar-data")
+def calendar_data():
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Get all distinct workout dates
+    cursor.execute("""
+        SELECT DISTINCT date FROM workout_logs ORDER BY date
+    """)
+    all_dates = [row["date"] for row in cursor.fetchall()]
+    
+    # Get workout details per date
+    workout_details = {}
+    for date in all_dates:
+        cursor.execute("""
+            SELECT split_days.day_name, COUNT(DISTINCT workout_logs.id) as exercise_count,
+                   COUNT(sets.id) as total_sets
+            FROM workout_logs
+            JOIN sets ON sets.log_id = workout_logs.id
+            LEFT JOIN split_days ON split_days.id = (
+                SELECT split_exercises.split_day_id FROM split_exercises
+                WHERE split_exercises.exercise_id = workout_logs.exercise_id
+                LIMIT 1
+            )
+            WHERE workout_logs.date = ?
+        """, (date,))
+        details = cursor.fetchone()
+        if details:
+            workout_details[date] = {
+                "day_name": details["day_name"] or "Workout",
+                "total_sets": details["total_sets"] or 0,
+                "exercise_count": details["exercise_count"] or 0
+            }
+    
+    conn.close()
+    from flask import jsonify
+    return jsonify({
+        "workout_dates": all_dates,
+        "workout_details": workout_details
+    })
+
 if __name__ == "__main__":
     app.run(debug=True)

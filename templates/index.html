@@ -4,6 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiftLog</title>
+    <style>
+        .cal-day {
+            text-align: center;
+            padding: 6px 2px;
+            cursor: pointer;
+            border-radius: 50%;
+            font-size: 0.9em;
+        }
+        .cal-day:hover { background: #f0f0f0; }
+        .cal-day.active { font-weight: bold; }
+        .cal-day.today { border: 2px solid black; border-radius: 8px; }
+        .dot {
+            width: 4px; height: 4px;
+            background: black;
+            border-radius: 50%;
+            margin: 2px auto 0;
+        }
+        .dot.active-dot { background: black; }
+
+        /* Full calendar modal */
+        #full-cal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        #full-cal-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: white;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        #full-cal-modal.open { transform: translateY(0); }
+
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .month-day-header {
+            color: gray;
+            font-size: 0.75em;
+            padding: 4px 0;
+        }
+        .month-day {
+            padding: 8px 2px 2px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 50%;
+            font-size: 0.9em;
+            color: gray;
+        }
+        .month-day.has-workout {
+            font-weight: bold;
+            color: black;
+            cursor: pointer;
+        }
+        .month-day.is-today {
+            border: 2px solid black;
+            border-radius: 8px;
+            color: black;
+        }
+        .month-day:hover { background: #f0f0f0; }
+
+        /* Workout detail panel */
+        #detail-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 1001;
+        }
+        #detail-panel {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            border-radius: 16px 16px 0 0;
+            padding: 24px;
+            z-index: 1002;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        #detail-panel.open { transform: translateY(0); }
+    </style>
 </head>
 <body>
     <h1>LiftLog</h1>
@@ -32,14 +125,13 @@
     <a href="/progress">My Progress</a>
 
     <hr>
+    <!-- Mini 2-week calendar -->
     <h2>Last 2 Weeks</h2>
-    <div id="calendar-container">
+    <div id="calendar-container" onclick="openFullCalendar()" style="cursor:pointer;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <span style="color:gray; font-size:0.9em;" id="date-range"></span>
             <span><span id="active-days-count" style="font-size:1.5em; font-weight:bold;"></span> <span style="color:gray; font-size:0.85em;">active days</span></span>
         </div>
-
-        <!-- Day headers -->
         <div style="display:grid; grid-template-columns:repeat(7, 1fr); text-align:center; margin-bottom:6px;">
             <span style="color:gray; font-size:0.8em;">S</span>
             <span style="color:gray; font-size:0.8em;">M</span>
@@ -49,61 +141,202 @@
             <span style="color:gray; font-size:0.8em;">F</span>
             <span style="color:gray; font-size:0.8em;">S</span>
         </div>
-
-        <!-- Calendar grid -->
         <div id="calendar-grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center;"></div>
+    </div>
+
+    <!-- Full calendar modal -->
+    <div id="full-cal-overlay" onclick="closeFullCalendar()"></div>
+    <div id="full-cal-modal">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; position:sticky; top:0; background:white; padding-bottom:10px; border-bottom:1px solid #eee;">
+            <button onclick="changeYear(-1)" style="background:none; border:none; font-size:1.3em; cursor:pointer;">‹</button>
+            <span id="cal-year-label" style="font-size:1.3em; font-weight:bold;"></span>
+            <button onclick="changeYear(1)" style="background:none; border:none; font-size:1.3em; cursor:pointer;">›</button>
+            <button onclick="closeFullCalendar()" style="background:none; border:none; font-size:1.3em; cursor:pointer; margin-left:16px;">✕</button>
+        </div>
+        <div id="full-cal-body"></div>
+    </div>
+
+    <!-- Workout detail panel -->
+    <div id="detail-overlay" onclick="closeDetailPanel()"></div>
+    <div id="detail-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h3 id="detail-date" style="margin:0;"></h3>
+            <button onclick="closeDetailPanel()" style="background:none; border:none; font-size:1.3em; cursor:pointer; color:gray;">✕</button>
+        </div>
+        <p style="color:gray; margin:0 0 16px;">1 workout logged</p>
+        <div id="detail-content" style="background:#f5f5f5; border-radius:12px; padding:16px;">
+            <p id="detail-day-name" style="font-weight:bold; margin:0 0 4px;"></p>
+            <p id="detail-stats" style="color:gray; font-size:0.85em; margin:0;"></p>
+        </div>
     </div>
 
     <script>
         const workoutDates = {{ workout_dates | tojson }};
         const today = "{{ today }}";
         const twoWeeksAgo = "{{ two_weeks_ago }}";
+        const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        const monthNamesShort = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const dayHeaders = ["S","M","T","W","T","F","S"];
 
-        // Build the 14 day range
+        // --- Mini calendar ---
         const startDate = new Date(twoWeeksAgo + "T00:00:00");
         const endDate = new Date(today + "T00:00:00");
 
-        // Show date range label
-        const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         document.getElementById("date-range").textContent =
-            monthNames[startDate.getMonth()] + " " + startDate.getDate() +
+            monthNamesShort[startDate.getMonth()] + " " + startDate.getDate() +
             " - " +
-            monthNames[endDate.getMonth()] + " " + endDate.getDate();
-
-        // Count active days
+            monthNamesShort[endDate.getMonth()] + " " + endDate.getDate();
         document.getElementById("active-days-count").textContent = workoutDates.length;
 
-        // Fill empty cells before the first day of the range
         const grid = document.getElementById("calendar-grid");
-        const firstDayOfWeek = startDate.getDay(); // 0=Sun, 6=Sat
+        const firstDayOfWeek = startDate.getDay();
         for (let i = 0; i < firstDayOfWeek; i++) {
-            const empty = document.createElement("div");
-            grid.appendChild(empty);
+            grid.appendChild(document.createElement("div"));
         }
-
-        // Build each day cell
         let current = new Date(startDate);
         while (current <= endDate) {
             const dateStr = current.toISOString().split("T")[0];
             const isActive = workoutDates.includes(dateStr);
             const isToday = dateStr === today;
-
             const cell = document.createElement("div");
             cell.style = `
-                padding: 8px 4px;
+                padding: 8px 4px 2px;
                 border-radius: 8px;
                 font-weight: ${isActive ? "bold" : "normal"};
                 background: ${isActive ? "#222" : "transparent"};
                 color: ${isActive ? "white" : isToday ? "black" : "gray"};
                 font-size: 0.95em;
+                text-align: center;
             `;
-            cell.textContent = current.getDate();
+            cell.innerHTML = current.getDate() + (isActive ? '<div style="width:4px;height:4px;background:white;border-radius:50%;margin:2px auto 0;"></div>' : "");
             grid.appendChild(cell);
-
             current.setDate(current.getDate() + 1);
         }
+
+        // --- Full calendar ---
+        let allWorkoutDates = [];
+        let allWorkoutDetails = {};
+        let currentCalYear = new Date().getFullYear();
+
+        function openFullCalendar() {
+            // Fetch all workout data from our API route
+            fetch("/calendar-data")
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    allWorkoutDates = data.workout_dates;
+                    allWorkoutDetails = data.workout_details;
+                    renderFullCalendar(currentCalYear);
+                    document.getElementById("full-cal-overlay").style.display = "block";
+                    document.getElementById("full-cal-modal").style.display = "block";
+                    setTimeout(function() {
+                        document.getElementById("full-cal-modal").classList.add("open");
+                    }, 10);
+                });
+        }
+
+        function closeFullCalendar() {
+            document.getElementById("full-cal-modal").classList.remove("open");
+            setTimeout(function() {
+                document.getElementById("full-cal-modal").style.display = "none";
+                document.getElementById("full-cal-overlay").style.display = "none";
+            }, 300);
+        }
+
+        function changeYear(direction) {
+            currentCalYear += direction;
+            renderFullCalendar(currentCalYear);
+        }
+
+        function renderFullCalendar(year) {
+            document.getElementById("cal-year-label").textContent = year;
+            const body = document.getElementById("full-cal-body");
+            body.innerHTML = "";
+            const todayStr = today;
+
+            for (let month = 0; month < 12; month++) {
+                // Month title
+                const monthTitle = document.createElement("h3");
+                monthTitle.textContent = monthNames[month] + " " + year;
+                monthTitle.style = "margin-bottom:8px;";
+                body.appendChild(monthTitle);
+
+                // Day headers
+                const headerGrid = document.createElement("div");
+                headerGrid.className = "month-grid";
+                dayHeaders.forEach(function(d) {
+                    const h = document.createElement("div");
+                    h.className = "month-day-header";
+                    h.textContent = d;
+                    headerGrid.appendChild(h);
+                });
+                body.appendChild(headerGrid);
+
+                // Day grid
+                const dayGrid = document.createElement("div");
+                dayGrid.className = "month-grid";
+
+                // Empty cells before first day
+                const firstDay = new Date(year, month, 1).getDay();
+                for (let i = 0; i < firstDay; i++) {
+                    dayGrid.appendChild(document.createElement("div"));
+                }
+
+                // Days in month
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = year + "-" +
+                        String(month + 1).padStart(2, "0") + "-" +
+                        String(d).padStart(2, "0");
+                    const hasWorkout = allWorkoutDates.includes(dateStr);
+                    const isToday = dateStr === todayStr;
+
+                    const cell = document.createElement("div");
+                    cell.className = "month-day" +
+                        (hasWorkout ? " has-workout" : "") +
+                        (isToday ? " is-today" : "");
+
+                    cell.innerHTML = d + (hasWorkout ?
+                        '<div class="dot"></div>' : "");
+
+                    if (hasWorkout) {
+                        cell.onclick = function() { openDetailPanel(dateStr); };
+                    }
+
+                    dayGrid.appendChild(cell);
+                }
+
+                body.appendChild(dayGrid);
+            }
+        }
+
+        // --- Workout detail panel ---
+        function openDetailPanel(dateStr) {
+            const details = allWorkoutDetails[dateStr];
+            if (!details) return;
+
+            const date = new Date(dateStr + "T00:00:00");
+            const dayOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][date.getDay()];
+            const dateLabel = dayOfWeek + ", " + monthNames[date.getMonth()] + " " + date.getDate();
+
+            document.getElementById("detail-date").textContent = dateLabel;
+            document.getElementById("detail-day-name").textContent = details.day_name;
+            document.getElementById("detail-stats").textContent =
+                details.total_sets + " sets · " + details.exercise_count + " exercises";
+
+            document.getElementById("detail-overlay").style.display = "block";
+            document.getElementById("detail-panel").style.display = "block";
+            setTimeout(function() {
+                document.getElementById("detail-panel").classList.add("open");
+            }, 10);
+        }
+
+        function closeDetailPanel() {
+            document.getElementById("detail-panel").classList.remove("open");
+            setTimeout(function() {
+                document.getElementById("detail-panel").style.display = "none";
+                document.getElementById("detail-overlay").style.display = "none";
+            }, 300);
+        }
     </script>
-</body>
-</html>
 </body>
 </html>
