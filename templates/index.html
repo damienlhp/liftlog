@@ -4,171 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiftLog</title>
-    <style>
-        .cal-day {
-            text-align: center;
-            padding: 6px 2px;
-            cursor: pointer;
-            border-radius: 50%;
-            font-size: 0.9em;
-        }
-        .cal-day:hover { background: #f0f0f0; }
-        .cal-day.active { font-weight: bold; }
-        .cal-day.today { border: 2px solid black; border-radius: 8px; }
-        .dot {
-            width: 4px; height: 4px;
-            background: black;
-            border-radius: 50%;
-            margin: 2px auto 0;
-        }
-        .dot.active-dot { background: black; }
-
-        /* Full calendar modal */
-        #full-cal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-        }
-        #full-cal-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: white;
-            z-index: 1000;
-            overflow-y: auto;
-            padding: 20px;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-        #full-cal-modal.open { transform: translateY(0); }
-
-        .month-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .month-day-header {
-            color: gray;
-            font-size: 0.75em;
-            padding: 4px 0;
-        }
-        .month-day {
-            padding: 8px 2px 2px;
-            text-align: center;
-            cursor: pointer;
-            border-radius: 50%;
-            font-size: 0.9em;
-            color: gray;
-        }
-        .month-day.has-workout {
-            font-weight: bold;
-            color: black;
-            cursor: pointer;
-        }
-        .month-day.is-today {
-            border: 2px solid black;
-            border-radius: 8px;
-            color: black;
-        }
-        .month-day:hover { background: #f0f0f0; }
-
-        /* Workout detail panel */
-        #detail-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.3);
-            z-index: 1001;
-        }
-        #detail-panel {
-            display: none;
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: white;
-            border-radius: 16px 16px 0 0;
-            padding: 24px;
-            z-index: 1002;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-        #detail-panel.open { transform: translateY(0); }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
+    <!-- Accent color picker: theme.js fills this div with clickable circles -->
+    <div class="theme-picker" id="theme-picker"></div>
+
     <h1>LiftLog</h1>
 
     <h2>My Workout Splits</h2>
     {% if splits %}
         {% for split in splits %}
-            <div>
+            <div class="split-card">
                 <h3>{{ split.name }}</h3>
-                <a href="/split/{{ split.id }}">View Split</a>
-                <a href="/log/{{ split.id }}">Log Workout</a>
-                <form action="/split/{{ split.id }}/delete" method="POST" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Delete {{ split.name }}?')">Delete</button>
-                </form>
+                <div class="split-actions">
+                    <a class="btn btn-secondary" href="/split/{{ split.id }}">View Split</a>
+                    <a class="btn btn-primary" href="/log/{{ split.id }}">Log Workout</a>
+                    <form action="/split/{{ split.id }}/delete" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Delete {{ split.name }}?')">Delete</button>
+                    </form>
+                </div>
             </div>
         {% endfor %}
     {% else %}
-        <p>You have no workout splits yet.</p>
+        <p class="empty-state">You have no workout splits yet.</p>
     {% endif %}
 
-    <a href="/create-split">+ Create a Workout Split</a>
+    <a class="add-split-link" href="/create-split">+ Create a Workout Split</a>
 
     <hr>
     <h2>Exercises</h2>
-    <a href="/exercises">Manage Exercises</a>
-    <a href="/progress">My Progress</a>
+    <a class="btn btn-secondary" href="/exercises">Manage Exercises</a>
+    <a class="btn btn-secondary" href="/progress">My Progress</a>
 
     <hr>
     <!-- Mini 2-week calendar -->
     <h2>Last 2 Weeks</h2>
-    <div id="calendar-container" onclick="openFullCalendar()" style="cursor:pointer;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <span style="color:gray; font-size:0.9em;" id="date-range"></span>
-            <span><span id="active-days-count" style="font-size:1.5em; font-weight:bold;"></span> <span style="color:gray; font-size:0.85em;">active days</span></span>
+    <div id="calendar-container" class="calendar-section" onclick="openFullCalendar()">
+        <div class="calendar-header-row">
+            <span class="date-range" id="date-range"></span>
+            <span><span class="active-days-count" id="active-days-count"></span> <span class="active-days-label">active days</span></span>
         </div>
-        <div style="display:grid; grid-template-columns:repeat(7, 1fr); text-align:center; margin-bottom:6px;">
-            <span style="color:gray; font-size:0.8em;">S</span>
-            <span style="color:gray; font-size:0.8em;">M</span>
-            <span style="color:gray; font-size:0.8em;">T</span>
-            <span style="color:gray; font-size:0.8em;">W</span>
-            <span style="color:gray; font-size:0.8em;">T</span>
-            <span style="color:gray; font-size:0.8em;">F</span>
-            <span style="color:gray; font-size:0.8em;">S</span>
+        <div class="calendar-weekdays">
+            <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
         </div>
-        <div id="calendar-grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; text-align:center;"></div>
+        <div id="calendar-grid" class="calendar-grid"></div>
     </div>
 
     <!-- Full calendar modal -->
-    <div id="full-cal-overlay" onclick="closeFullCalendar()"></div>
-    <div id="full-cal-modal">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; position:sticky; top:0; background:white; padding-bottom:10px; border-bottom:1px solid #eee;">
-            <button onclick="changeYear(-1)" style="background:none; border:none; font-size:1.3em; cursor:pointer;">‹</button>
-            <span id="cal-year-label" style="font-size:1.3em; font-weight:bold;"></span>
-            <button onclick="changeYear(1)" style="background:none; border:none; font-size:1.3em; cursor:pointer;">›</button>
-            <button onclick="closeFullCalendar()" style="background:none; border:none; font-size:1.3em; cursor:pointer; margin-left:16px;">✕</button>
+    <div id="full-cal-overlay" class="full-cal-overlay" onclick="closeFullCalendar()"></div>
+    <div id="full-cal-modal" class="full-cal-modal">
+        <div class="full-cal-header">
+            <button onclick="changeYear(-1)" class="cal-nav-btn">‹</button>
+            <span id="cal-year-label" class="cal-year-label"></span>
+            <button onclick="changeYear(1)" class="cal-nav-btn">›</button>
+            <button onclick="closeFullCalendar()" class="cal-nav-btn" style="margin-left:16px;">✕</button>
         </div>
         <div id="full-cal-body"></div>
     </div>
 
     <!-- Workout detail panel -->
-    <div id="detail-overlay" onclick="closeDetailPanel()"></div>
-    <div id="detail-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <h3 id="detail-date" style="margin:0;"></h3>
-            <button onclick="closeDetailPanel()" style="background:none; border:none; font-size:1.3em; cursor:pointer; color:gray;">✕</button>
+    <div id="detail-overlay" class="detail-overlay" onclick="closeDetailPanel()"></div>
+    <div id="detail-panel" class="detail-panel">
+        <div class="detail-header">
+            <h3 id="detail-date"></h3>
+            <button onclick="closeDetailPanel()" class="detail-close">✕</button>
         </div>
-        <p style="color:gray; margin:0 0 16px;">1 workout logged</p>
-        <div id="detail-content" style="background:#f5f5f5; border-radius:12px; padding:16px;">
-            <p id="detail-day-name" style="font-weight:bold; margin:0 0 4px;"></p>
-            <p id="detail-stats" style="color:gray; font-size:0.85em; margin:0;"></p>
+        <p class="detail-subtitle">1 workout logged</p>
+        <div id="detail-content" class="detail-content">
+            <p id="detail-day-name" class="detail-day-name"></p>
+            <p id="detail-stats" class="detail-stats"></p>
         </div>
     </div>
+
+    <!-- theme.js sets up the color picker above -->
+    <script src="{{ url_for('static', filename='theme.js') }}"></script>
 
     <script>
         const workoutDates = {{ workout_dates | tojson }};
@@ -198,18 +109,12 @@
             const dateStr = current.toISOString().split("T")[0];
             const isActive = workoutDates.includes(dateStr);
             const isToday = dateStr === today;
+
             const cell = document.createElement("div");
-            cell.style = `
-                padding: 8px 4px 2px;
-                border-radius: 8px;
-                font-weight: ${isActive ? "bold" : "normal"};
-                background: ${isActive ? "#222" : "transparent"};
-                color: ${isActive ? "white" : isToday ? "black" : "gray"};
-                font-size: 0.95em;
-                text-align: center;
-            `;
-            cell.innerHTML = current.getDate() + (isActive ? '<div style="width:4px;height:4px;background:white;border-radius:50%;margin:2px auto 0;"></div>' : "");
+            cell.className = "cal-cell" + (isActive ? " active" : "") + (isToday && !isActive ? " today" : "");
+            cell.innerHTML = current.getDate() + (isActive ? '<div class="cal-dot"></div>' : "");
             grid.appendChild(cell);
+
             current.setDate(current.getDate() + 1);
         }
 
@@ -219,7 +124,6 @@
         let currentCalYear = new Date().getFullYear();
 
         function openFullCalendar() {
-            // Fetch all workout data from our API route
             fetch("/calendar-data")
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
@@ -254,13 +158,11 @@
             const todayStr = today;
 
             for (let month = 0; month < 12; month++) {
-                // Month title
                 const monthTitle = document.createElement("h3");
                 monthTitle.textContent = monthNames[month] + " " + year;
-                monthTitle.style = "margin-bottom:8px;";
+                monthTitle.className = "month-title";
                 body.appendChild(monthTitle);
 
-                // Day headers
                 const headerGrid = document.createElement("div");
                 headerGrid.className = "month-grid";
                 dayHeaders.forEach(function(d) {
@@ -271,17 +173,14 @@
                 });
                 body.appendChild(headerGrid);
 
-                // Day grid
                 const dayGrid = document.createElement("div");
                 dayGrid.className = "month-grid";
 
-                // Empty cells before first day
                 const firstDay = new Date(year, month, 1).getDay();
                 for (let i = 0; i < firstDay; i++) {
                     dayGrid.appendChild(document.createElement("div"));
                 }
 
-                // Days in month
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
                 for (let d = 1; d <= daysInMonth; d++) {
                     const dateStr = year + "-" +
