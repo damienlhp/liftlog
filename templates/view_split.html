@@ -4,48 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ split.name }} - LiftLog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 </head>
 <body>
+    <a class="back-link" href="/">← Back to Home</a>
     <h1>{{ split.name }}</h1>
-    <a href="/">Back to Home</a>
 
     <h2>Days</h2>
     {% if days %}
         {% for day in days %}
-            <div>
+            <div class="day-card">
                 <h3>Day {{ day.day_order }}: {{ day.day_name }}</h3>
-                <ul class="sortable-list" data-split-id="{{ split.id }}">
+                <ul class="exercise-list sortable-list" data-split-id="{{ split.id }}">
                     {% for exercise in day.exercises %}
-                        <li data-split-exercise-id="{{ exercise.split_exercise_id }}" style="cursor:grab; border:1px solid #ccc; padding:8px; margin-bottom:4px; background:white;">
-                            ☰ {{ exercise.name }} - {{ exercise.muscle_group }} — {{ exercise.sets_count }} sets
-                            <form action="/split/{{ split.id }}/remove-exercise/{{ day.id }}/{{ exercise.split_exercise_id }}" method="POST" style="display:inline">
-                                <button type="submit">Remove</button>
+                        <li class="exercise-item" data-split-exercise-id="{{ exercise.split_exercise_id }}">
+                            <div class="exercise-info">
+                                <span class="drag-handle">☰</span>
+                                <span>{{ exercise.name }}</span>
+                                <span class="exercise-meta">{{ exercise.muscle_group }} — {{ exercise.sets_count }} sets</span>
+                            </div>
+                            <form action="/split/{{ split.id }}/remove-exercise/{{ day.id }}/{{ exercise.split_exercise_id }}" method="POST">
+                                <button type="submit" class="btn-remove">Remove</button>
                             </form>
                         </li>
                     {% endfor %}
                 </ul>
-                <a href="/split/{{ split.id }}/add-day-exercise/{{ day.id }}">+ Add Exercise to this day</a>
+                <a class="add-exercise-link" href="/split/{{ split.id }}/add-day-exercise/{{ day.id }}">+ Add Exercise to this day</a>
             </div>
         {% endfor %}
     {% else %}
-        <p>No days yet. Add your first day below.</p>
+        <p class="empty-state">No days yet. Add your first day below.</p>
     {% endif %}
 
     <hr>
     <h2>Add a Day</h2>
-    <form action="/split/{{ split.id }}/add-day" method="POST">
-        <input type="text" name="day_name" placeholder="e.g. Push, Pull, Legs, Chest Day" required>
-        <button type="submit">Add Day</button>
+    <form action="/split/{{ split.id }}/add-day" method="POST" class="form-row">
+        <input type="text" name="day_name" class="text-input" placeholder="e.g. Push, Pull, Legs, Chest Day" required>
+        <button type="submit" class="btn btn-primary">Add Day</button>
     </form>
 
     <script>
-        // Turn every exercise list into a draggable, sortable list
         document.querySelectorAll(".sortable-list").forEach(function(list) {
             new Sortable(list, {
                 animation: 150,
                 onEnd: function() {
-                    // Build the new order from the list's current DOM order
                     const splitExerciseIds = Array.from(list.children).map(function(li) {
                         return li.getAttribute("data-split-exercise-id");
                     });

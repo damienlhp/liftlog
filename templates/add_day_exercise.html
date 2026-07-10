@@ -4,62 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Exercise - LiftLog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <a class="back-link" href="/split/{{ split_id }}">← Back to Split</a>
     <h1>Add Exercise to {{ day.day_name }}</h1>
-    <a href="/split/{{ split_id }}">Back to Split</a>
 
     <h2>Current Exercises</h2>
     {% if current_exercises %}
-        <ul>
+        <ul class="simple-list">
             {% for exercise in current_exercises %}
-                <li>{{ exercise.name }} - {{ exercise.muscle_group }} — {{ exercise.sets_count }} sets</li>
+                <li>{{ exercise.name }} <span class="exercise-meta">{{ exercise.muscle_group }} — {{ exercise.sets_count }} sets</span></li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>No exercises added yet.</p>
+        <p class="empty-state">No exercises added yet.</p>
     {% endif %}
 
-    <h2>Add an Exercise</h2>
-    <form action="/split/{{ split_id }}/add-day-exercise/{{ day.id }}" method="POST">
-        <select name="exercise_id">
-            {% for exercise in all_exercises %}
-                <option value="{{ exercise.id }}">{{ exercise.name }} - {{ exercise.muscle_group }}</option>
-            {% endfor %}
-        </select>
-        <label>Sets</label>
-        <select name="sets_count">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3" selected>3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-        </select>
-        <button type="submit">Add Exercise</button>
-    </form>
+    <div class="form-section">
+        <h2>Add an Exercise</h2>
+        <form action="/split/{{ split_id }}/add-day-exercise/{{ day.id }}" method="POST" class="form-row">
+            <select name="exercise_id" class="select-input">
+                {% for exercise in all_exercises %}
+                    <option value="{{ exercise.id }}">{{ exercise.name }} - {{ exercise.muscle_group }}</option>
+                {% endfor %}
+            </select>
+            <label class="field-label">Sets</label>
+            <select name="sets_count" class="select-input">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Add Exercise</button>
+        </form>
+    </div>
 
-    <h2>Can't find your exercise? Add a custom one</h2>
-    <form action="/split/{{ split_id }}/add-custom-exercise/{{ day.id }}" method="POST">
-        <input type="text" name="name" placeholder="Exercise name" required>
-        <select name="muscle_group">
-            <option value="Arms">Arms</option>
-            <option value="Back">Back</option>
-            <option value="Chest">Chest</option>
-            <option value="Core">Core</option>
-            <option value="Legs">Legs</option>
-            <option value="Shoulders">Shoulders</option>
-        </select>
-        <label>Sets</label>
-        <select name="sets_count">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3" selected>3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-        </select>
-        <button type="submit">Add Custom Exercise</button>
-    </form>
+    <div class="form-section">
+        <h2>Can't find your exercise? Add a custom one</h2>
+        <form action="/split/{{ split_id }}/add-custom-exercise/{{ day.id }}" method="POST" class="form-row">
+            <input type="text" name="name" class="text-input" placeholder="Exercise name" required>
+            <select name="muscle_group" class="select-input">
+                <option value="Arms">Arms</option>
+                <option value="Back">Back</option>
+                <option value="Chest">Chest</option>
+                <option value="Core">Core</option>
+                <option value="Legs">Legs</option>
+                <option value="Shoulders">Shoulders</option>
+            </select>
+            <label class="field-label">Sets</label>
+            <select name="sets_count" class="select-input">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Add Custom Exercise</button>
+        </form>
+    </div>
 </body>
 </html>
