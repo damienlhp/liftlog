@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 </head>
 <body>
+    <script src="{{ url_for('static', filename='theme.js') }}"></script>
     <div class="page-header-row">
         <h1>{{ split.name }} — {{ day.day_name }}</h1>
         <div id="workout-timer" class="workout-timer">00:00</div>
