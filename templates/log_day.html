@@ -4,114 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log Workout - LiftLog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 </head>
 <body>
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="page-header-row">
         <h1>{{ split.name }} — {{ day.day_name }}</h1>
-        <div id="workout-timer" style="font-size:1.2em; font-weight:bold; color:gray;">00:00</div>
+        <div id="workout-timer" class="workout-timer">00:00</div>
     </div>
-    <a href="#" onclick="showLeaveModal(); return false;">Back to Home</a>
+    <a class="back-link" href="#" onclick="showLeaveModal(); return false;">← Back to Home</a>
 
     <!-- Unit toggle -->
-    <div>
-        <button type="button" onclick="toggleUnit()">Switch to {{ "lbs" if last_unit == "kg" else "kg" }}</button>
+    <div class="control-bar">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleUnit()">Switch to {{ "lbs" if last_unit == "kg" else "kg" }}</button>
         <input type="hidden" id="selected-unit" name="unit" value="lbs">
     </div>
 
     <!-- Rest timer settings -->
-    <div>
-        <label>
+    <div class="control-bar" style="flex-direction: column; align-items: flex-start;">
+        <label class="checkbox-label">
             <input type="checkbox" id="rest-timer-toggle" onchange="toggleRestTimerOptions()">
             Rest Timer
         </label>
-        <div id="rest-timer-options" style="display:none;">
+        <div id="rest-timer-options" class="rest-timer-options">
             <button type="button" onclick="setRestDuration(30)" class="rest-duration-btn">0:30</button>
             <button type="button" onclick="setRestDuration(60)" class="rest-duration-btn">1:00</button>
             <button type="button" onclick="setRestDuration(90)" class="rest-duration-btn">1:30</button>
-            <input type="text" id="custom-rest-seconds" placeholder="m:ss (e.g. 1:30)" style="width:140px;">
-            <button type="button" onclick="setCustomRestDuration()">Set</button>
-            <span id="selected-rest-duration"></span>
+            <input type="text" id="custom-rest-seconds" class="text-input text-input-sm" placeholder="m:ss (e.g. 1:30)">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setCustomRestDuration()">Set</button>
+            <span id="selected-rest-duration" class="selected-rest-duration"></span>
         </div>
     </div>
 
     <form action="/log/{{ split.id }}/{{ day.id }}" method="POST">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <input type="date" name="date" required>
-            <button type="submit">Save Workout</button>
+        <div class="save-bar">
+            <input type="date" name="date" class="text-input" required>
+            <button type="submit" class="btn btn-primary">Save Workout</button>
         </div>
 
         {% set all_exercise_ids = exercises | map(attribute='id') | list %}
         <div id="sortable-exercises" data-split-id="{{ split.id }}">
         {% for exercise in exercises %}
             {% if exercise.id not in supersets.values() %}
-            <div id="exercise-block-{{ exercise.id }}" data-split-exercise-id="{{ exercise.split_exercise_id }}">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span class="drag-handle" style="color:gray; cursor:grab; margin-right:8px;">☰</span>
-                                <h3 style="flex:1;">{{ exercise.name }}</h3>
-                                <button type="button" onclick="openMenu({{ exercise.id }}, '{{ exercise.name }}', {{ exercise.split_exercise_id }}, {{ all_exercise_ids | tojson }})">⋯</button>
-                            </div>
-                <p>{{ exercise.muscle_group }}</p>
+            <div id="exercise-block-{{ exercise.id }}" class="exercise-block" data-split-exercise-id="{{ exercise.split_exercise_id }}">
+                <div class="exercise-block-header">
+                    <span class="drag-handle">☰</span>
+                    <h3>{{ exercise.name }}</h3>
+                    <button type="button" class="exercise-menu-btn" onclick="openMenu({{ exercise.id }}, '{{ exercise.name }}', {{ exercise.split_exercise_id }}, {{ all_exercise_ids | tojson }})">⋯</button>
+                </div>
+                <p class="exercise-muscle-group">{{ exercise.muscle_group }}</p>
 
                 <div id="sets-{{ exercise.id }}">
                         {% for i in range(1, exercise.sets_count + 1) %}
-                            <div>
-                                <label>Set {{ i }}</label>
+                            <div class="set-row">
+                                <label class="set-label">Set {{ i }}</label>
                                 {% if previous_data[exercise.id] and previous_data[exercise.id]["sets"]|length >= i %}
                                     <input type="number"
-                                        class="weight-input"
+                                        class="text-input set-input weight-input"
                                         name="weight_{{ exercise.id }}_{{ i }}"
                                         value="{{ previous_data[exercise.id]['sets'][i-1]['weight'] }}"
+                                        placeholder="Weight ({{ last_unit }})"
                                         step="any">
                                     <input type="number"
+                                        class="text-input set-input-sm"
                                         name="reps_{{ exercise.id }}_{{ i }}"
-                                        value="{{ previous_data[exercise.id]['sets'][i-1]['reps'] }}">
+                                        value="{{ previous_data[exercise.id]['sets'][i-1]['reps'] }}"
+                                        placeholder="Reps">
                                 {% else %}
                                     <input type="number"
-                                        class="weight-input"
+                                        class="text-input set-input weight-input"
                                         name="weight_{{ exercise.id }}_{{ i }}"
-                                        placeholder="Weight (lbs)"
+                                        placeholder="Weight ({{ last_unit }})"
                                         step="any">
                                     <input type="number"
+                                        class="text-input set-input-sm"
                                         name="reps_{{ exercise.id }}_{{ i }}"
                                         placeholder="Reps">
                                 {% endif %}
                                 <span class="unit-label">{{ last_unit }}</span>
-                                <button type="button" onclick="markSetDone(this)">✓</button>
+                                <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
                                 <div class="rest-countdown"></div>
                             </div>
                         {% endfor %}
-                    </div> 
+                    </div>
 
-                <button type="button" onclick="addSet({{ exercise.id }}, {{ exercise.sets_count }})">+ Add Set</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addSet({{ exercise.id }}, {{ exercise.sets_count }})">+ Add Set</button>
 
                 {% if exercise.id in supersets %}
                     {% set paired_id = supersets[exercise.id] %}
                     {% for ex2 in exercises %}
                         {% if ex2.id == paired_id %}
-                            <div style="border-left: 3px solid orange; margin-left:50px; padding-left:15px; margin-top:10px; background:#fffdf7;">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
-                                    <button type="button" onclick="removeSuperset({{ exercise.id }})" style="background:none; border:none; cursor:pointer; color:red; font-size:1em;">✕</button>
+                            <div class="superset-block">
+                                <div class="superset-block-header">
+                                    <p class="superset-label">🔗 SUPERSET</p>
+                                    <button type="button" class="superset-remove-btn" onclick="removeSuperset({{ exercise.id }})">✕</button>
                                 </div>
                                 <h3>{{ ex2.name }}</h3>
-                                <p>{{ ex2.muscle_group }}</p>
+                                <p class="exercise-muscle-group">{{ ex2.muscle_group }}</p>
                                 <div id="sets-{{ ex2.id }}">
                                     {% for i in range(1, ex2.sets_count + 1) %}
-                                        <div>
-                                            <label>Set {{ i }}</label>
+                                        <div class="set-row">
+                                            <label class="set-label">Set {{ i }}</label>
                                             {% if previous_data[ex2.id] and previous_data[ex2.id]["sets"]|length >= i %}
-                                                <input type="number" class="weight-input" name="weight_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['weight'] }}" step="any">
-                                                <input type="number" name="reps_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['reps'] }}">
+                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['weight'] }}" placeholder="Weight ({{ last_unit }})" step="any">
+                                                <input type="number" class="text-input set-input-sm" name="reps_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['reps'] }}" placeholder="Reps">
                                             {% else %}
-                                                <input type="number" class="weight-input" name="weight_{{ ex2.id }}_{{ i }}" placeholder="Weight ({{ last_unit }})" step="any">
-                                                <input type="number" name="reps_{{ ex2.id }}_{{ i }}" placeholder="Reps">
+                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" placeholder="Weight ({{ last_unit }})" step="any">
+                                                <input type="number" class="text-input set-input-sm" name="reps_{{ ex2.id }}_{{ i }}" placeholder="Reps">
                                             {% endif %}
                                             <span class="unit-label">{{ last_unit }}</span>
                                         </div>
                                     {% endfor %}
                                 </div>
-                                <button type="button" onclick="addSet({{ ex2.id }}, {{ ex2.sets_count }})">+ Add Set</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="addSet({{ ex2.id }}, {{ ex2.sets_count }})">+ Add Set</button>
                                 <input type="hidden" name="superset_pair" value="{{ exercise.id }}_{{ ex2.id }}">
                             </div>
                         {% endif %}
@@ -130,17 +135,13 @@
         let setCounts = {};
 
         function toggleUnit() {
-            // Flip the unit
             currentUnit = currentUnit === "lbs" ? "kg" : "lbs";
 
-            // Update the toggle button text
             document.querySelector("button[onclick='toggleUnit()']").textContent =
                 currentUnit === "lbs" ? "Switch to kg" : "Switch to lbs";
 
-            // Update the hidden input so the unit gets sent with the form
             document.getElementById("unit-input").value = currentUnit;
 
-            // Convert all existing weight inputs
             const weightInputs = document.querySelectorAll(".weight-input");
             weightInputs.forEach(function(input) {
                 if (input.value) {
@@ -153,7 +154,6 @@
                 input.placeholder = "Weight (" + currentUnit + ")";
             });
 
-            // Update all unit labels
             const unitLabels = document.querySelectorAll(".unit-label");
             unitLabels.forEach(function(label) {
                 label.textContent = currentUnit;
@@ -168,46 +168,44 @@
             const count = setCounts[exerciseId];
             const container = document.getElementById("sets-" + exerciseId);
             const div = document.createElement("div");
+            div.className = "set-row";
             div.innerHTML = `
-                <label>Set ${count}</label>
-                <input type="number" class="weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="any">
-                <input type="number" name="reps_${exerciseId}_${count}" placeholder="Reps">
+                <label class="set-label">Set ${count}</label>
+                <input type="number" class="text-input set-input weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="any">
+                <input type="number" class="text-input set-input-sm" name="reps_${exerciseId}_${count}" placeholder="Reps">
                 <span class="unit-label">${currentUnit}</span>
-                <button type="button" onclick="markSetDone(this)">✓</button>
+                <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
                 <div class="rest-countdown"></div>
             `;
             container.appendChild(div);
         }
     </script>
-        <!-- Exercise options modal -->
-    <div id="exercise-modal" style="display:none; position:fixed; bottom:0; left:0; right:0;
-        background:white; border-top:2px solid #ccc; padding:20px; z-index:1000;">
+
+    <!-- Exercise options modal -->
+    <div id="exercise-modal" class="exercise-modal">
         <h3 id="modal-exercise-name"></h3>
-        <p style="color:gray; font-size:0.85em;">EXERCISE OPTIONS</p>
+        <p class="modal-eyebrow">EXERCISE OPTIONS</p>
         <hr>
-        <ul style="list-style:none; padding:0;">
-            <li style="padding:12px 0; border-bottom:1px solid #eee;">
-                <a id="modal-graph-link" href="#">📈 View graph <span style="color:gray; font-size:0.85em;">— Progress over time</span></a>
+        <ul class="option-list">
+            <li>
+                <a id="modal-graph-link" href="#">📈 View graph <span class="option-sub">— Progress over time</span></a>
             </li>
-            <li style="padding:12px 0; border-bottom:1px solid #eee;">
-                <div onclick="openSupersetPanel()" style="cursor:pointer;">
-                    🔗 Add superset <span style="color:gray; font-size:0.85em;">— Link with another exercise</span>
-                </div>
+            <li onclick="openSupersetPanel()">
+                🔗 Add superset <span class="option-sub">— Link with another exercise</span>
             </li>
-            <li style="padding:12px 0;">
+            <li>
                 <form id="modal-delete-form" method="POST">
-                    <button type="submit" onclick="return confirm('Remove this exercise from the split?')" style="color:red; background:none; border:none; cursor:pointer; font-size:1em;">
-                        🗑️ Delete exercise <span style="color:gray; font-size:0.85em;">— Remove from this workout</span>
+                    <button type="submit" class="option-danger" onclick="return confirm('Remove this exercise from the split?')">
+                        🗑️ Delete exercise <span class="option-sub">— Remove from this workout</span>
                     </button>
                 </form>
             </li>
         </ul>
-        <button type="button" onclick="closeMenu()" style="margin-top:10px;">Close</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeMenu()" style="margin-top:10px;">Close</button>
     </div>
 
     <!-- Dark overlay behind modal -->
-    <div id="modal-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0;
-        background:rgba(0,0,0,0.4); z-index:999;" onclick="closeMenu()"></div>
+    <div id="modal-overlay" class="modal-overlay" onclick="closeMenu()"></div>
 
     <script>
         let currentExerciseId = null;
@@ -239,7 +237,6 @@
                     if (block) {
                         const name = block.textContent;
                         const li = document.createElement("li");
-                        li.style = "padding:10px 0; border-bottom:1px solid #eee; cursor:pointer;";
                         li.textContent = name;
                         li.onclick = function() { selectSuperset(exId); };
                         list.appendChild(li);
@@ -272,23 +269,25 @@
 
             const supersetWrapper = document.createElement("div");
             supersetWrapper.id = "exercise-block-" + tempId;
-            supersetWrapper.style = "border-left: 3px solid orange; margin-left:50px; padding-left:15px; margin-top:10px; background:#fffdf7;";
+            supersetWrapper.className = "superset-block";
             supersetWrapper.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
-                    <button type="button" onclick="removeSuperset(${currentExerciseId})" style="background:none; border:none; cursor:pointer; color:red; font-size:1em;">✕</button>
+                <div class="superset-block-header">
+                    <p class="superset-label">🔗 SUPERSET</p>
+                    <button type="button" class="superset-remove-btn" onclick="removeSuperset(${currentExerciseId})">✕</button>
                 </div>
                 <h3>${name}</h3>
-                <p>${muscleGroup}</p>
+                <p class="exercise-muscle-group">${muscleGroup}</p>
                 <div id="sets-${tempId}">
-                    <div>
-                        <label>Set 1</label>
-                        <input type="number" class="weight-input" name="weight_${tempId}_1" placeholder="Weight (${currentUnit})" step="any">
-                        <input type="number" name="reps_${tempId}_1" placeholder="Reps">
+                    <div class="set-row">
+                        <label class="set-label">Set 1</label>
+                        <input type="number" class="text-input set-input weight-input" name="weight_${tempId}_1" placeholder="Weight (${currentUnit})" step="any">
+                        <input type="number" class="text-input set-input-sm" name="reps_${tempId}_1" placeholder="Reps">
                         <span class="unit-label">${currentUnit}</span>
+                        <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
+                        <div class="rest-countdown"></div>
                     </div>
                 </div>
-                <button type="button" onclick="addSet(${tempId}, 1)">+ Add Set</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addSet(${tempId}, 1)">+ Add Set</button>
                 <input type="hidden" name="superset_pair" value="${currentExerciseId}_${tempId}">
                 <input type="hidden" name="new_exercise_${tempId}" value="${name}|${muscleGroup}">
             `;
@@ -311,37 +310,39 @@
             form.appendChild(input);
             closeSupersetPanel();
 
-            // Show superset visually without saving to database
             const parentBlock = document.getElementById("exercise-block-" + currentExerciseId);
             const pairedBlock = document.getElementById("exercise-block-" + pairedExerciseId);
             if (pairedBlock) {
                 const supersetWrapper = document.createElement("div");
-                supersetWrapper.style = "border-left: 3px solid orange; margin-left:50px; padding-left:15px; margin-top:10px; background:#fffdf7;";
+                supersetWrapper.className = "superset-block";
                 supersetWrapper.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <p style="color:orange; font-size:0.85em; margin:0;">🔗 SUPERSET</p>
-                        <button type="button" onclick="removeSuperset(${currentExerciseId})" style="background:none; border:none; cursor:pointer; color:red; font-size:1em;">✕</button>
+                    <div class="superset-block-header">
+                        <p class="superset-label">🔗 SUPERSET</p>
+                        <button type="button" class="superset-remove-btn" onclick="removeSuperset(${currentExerciseId})">✕</button>
                     </div>
                 `;
-                pairedBlock.style = "background:transparent;";
+                // The paired block already has its own card background —
+                // turn it off so only the superset wrapper's background shows
+                pairedBlock.style.background = "transparent";
+                pairedBlock.style.padding = "0";
                 supersetWrapper.appendChild(pairedBlock);
                 parentBlock.appendChild(supersetWrapper);
             }
             hasUnsavedChanges = true;
         }
     </script>
+
     <!-- Superset panel -->
-    <div id="superset-panel" style="display:none; position:fixed; bottom:0; left:0; right:0;
-        background:white; border-top:2px solid #ccc; padding:20px; z-index:1001; max-height:70vh; overflow-y:auto;">
+    <div id="superset-panel" class="superset-panel">
         <h3>Choose a superset exercise</h3>
-        <p style="color:gray; font-size:0.85em;">Pick from your day's exercises or add a new one</p>
-        <ul id="superset-exercise-list" style="list-style:none; padding:0;"></ul>
+        <p class="modal-eyebrow">Pick from your day's exercises or add a new one</p>
+        <ul id="superset-exercise-list" class="superset-exercise-list"></ul>
         <hr>
         <p><strong>Add a custom exercise:</strong></p>
-        <div id="superset-custom-form">
+        <div id="superset-custom-form" class="form-row">
             <input type="hidden" id="superset-exercise-id-1" value="">
-            <input type="text" id="custom-exercise-name" placeholder="Exercise name">
-            <select id="custom-exercise-muscle-group">
+            <input type="text" id="custom-exercise-name" class="text-input" placeholder="Exercise name">
+            <select id="custom-exercise-muscle-group" class="select-input">
                 <option value="Arms">Arms</option>
                 <option value="Back">Back</option>
                 <option value="Chest">Chest</option>
@@ -349,28 +350,26 @@
                 <option value="Legs">Legs</option>
                 <option value="Shoulders">Shoulders</option>
             </select>
-            <button type="button" onclick="addCustomSupersetExercise()">Add & Select</button>
+            <button type="button" class="btn btn-primary" onclick="addCustomSupersetExercise()">Add & Select</button>
         </div>
-        <button type="button" onclick="closeSupersetPanel()" style="margin-top:10px;">Cancel</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeSupersetPanel()" style="margin-top:10px;">Cancel</button>
     </div>
+
     <script>
         let hasUnsavedChanges = false;
 
-        // Mark changes as unsaved whenever any input changes
         document.addEventListener("input", function(e) {
             if (e.target.matches("input[type='number'], input[type='date']")) {
                 hasUnsavedChanges = true;
             }
         });
 
-        // Also mark unsaved when sets/exercises/supersets are added (already covered by addSet, addCustomSupersetExercise, selectSuperset since they create inputs, but let's be explicit too)
         const originalAddSet = addSet;
         addSet = function(exerciseId, baseCount) {
             originalAddSet(exerciseId, baseCount);
             hasUnsavedChanges = true;
         };
 
-        // Warn before leaving the page if there are unsaved changes
         window.addEventListener("beforeunload", function(e) {
             if (hasUnsavedChanges) {
                 e.preventDefault();
@@ -378,19 +377,18 @@
             }
         });
 
-        // Don't warn when any form on this page submits
         document.querySelectorAll("form").forEach(function(form) {
             form.addEventListener("submit", function() {
                 hasUnsavedChanges = false;
             });
         });
     </script>
-    
+
     <script>
         let restTimerEnabled = false;
-        let restDuration = 60; // default 60 seconds
-        let activeInterval = null; // the one currently running timer
-        let activeCountdownDiv = null; // which set's countdown box is showing it
+        let restDuration = 60;
+        let activeInterval = null;
+        let activeCountdownDiv = null;
 
         function toggleRestTimerOptions() {
             restTimerEnabled = document.getElementById("rest-timer-toggle").checked;
@@ -406,7 +404,6 @@
             const raw = document.getElementById("custom-rest-seconds").value.trim();
 
             if (raw.includes(":")) {
-                // Format like "1:30" or "0:15"
                 const parts = raw.split(":");
                 const minutes = parseInt(parts[0]) || 0;
                 const seconds = parseInt(parts[1]) || 0;
@@ -415,7 +412,6 @@
                     setRestDuration(totalSeconds);
                 }
             } else {
-                // Just a plain number, treat as seconds
                 const value = parseInt(raw);
                 if (value > 0) {
                     setRestDuration(value);
@@ -430,12 +426,18 @@
         }
 
         function markSetDone(button) {
+            // Toggle the filled/unfilled visual state — this runs no matter
+            // what, so the checkmark always fills with the theme color
+            button.classList.toggle("done");
+
+            // Only start the rest timer if the set was just marked done
+            // (not when the user is un-marking it) and the timer is enabled
+            if (!button.classList.contains("done")) return;
             if (!restTimerEnabled) return;
 
             const setRow = button.parentElement;
             const countdownDiv = setRow.querySelector(".rest-countdown");
 
-            // Stop whichever timer is currently running, anywhere on the page
             if (activeInterval) {
                 clearInterval(activeInterval);
                 if (activeCountdownDiv) {
@@ -488,14 +490,12 @@
         function removeSuperset(exerciseId) {
             if (!confirm('Remove this superset?')) return;
 
-            // Find and remove the superset block visually
             const parentBlock = document.getElementById("exercise-block-" + exerciseId);
-            const supersetDiv = parentBlock.querySelector("div[style*='border-left: 3px solid orange']");
+            const supersetDiv = parentBlock.querySelector(".superset-block");
             if (supersetDiv) {
                 supersetDiv.remove();
             }
 
-            // Track this deletion in the form so it saves when Save Workout is clicked
             const form = document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']");
             const input = document.createElement("input");
             input.type = "hidden";
@@ -508,16 +508,16 @@
     </script>
 
     <!-- Leave workout modal -->
-    <div id="leave-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:2000;" onclick="closeLeaveModal()"></div>
+    <div id="leave-overlay" class="leave-overlay" onclick="closeLeaveModal()"></div>
 
-    <div id="leave-modal" style="display:none; position:fixed; bottom:0; left:0; right:0; background:white; border-radius:16px 16px 0 0; padding:24px; z-index:2001; transform:translateY(100%); transition:transform 0.3s ease;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <h3 style="margin:0;">Leave Workout?</h3>
-            <button onclick="closeLeaveModal()" style="background:none; border:none; font-size:1.3em; cursor:pointer; color:gray;">✕</button>
+    <div id="leave-modal" class="leave-modal">
+        <div class="detail-header">
+            <h3>Leave Workout?</h3>
+            <button onclick="closeLeaveModal()" class="detail-close">✕</button>
         </div>
-        <p style="color:gray; margin-top:4px; margin-bottom:24px;">Your progress hasn't been saved.</p>
-        <button onclick="discardWorkout()" style="display:block; width:100%; padding:14px; margin-bottom:10px; background:none; border:2px solid red; border-radius:30px; color:red; font-size:1em; font-weight:bold; cursor:pointer;">Discard Workout</button>
-        <button onclick="saveAndExit()" style="display:block; width:100%; padding:14px; background:black; border:none; border-radius:30px; color:white; font-size:1em; font-weight:bold; cursor:pointer;">Save & Exit</button>
+        <p class="leave-modal-subtitle">Your progress hasn't been saved.</p>
+        <button onclick="discardWorkout()" class="leave-btn-discard">Discard Workout</button>
+        <button onclick="saveAndExit()" class="leave-btn-save">Save & Exit</button>
     </div>
 
     <script>
@@ -547,7 +547,6 @@
             document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").submit();
         }
 
-        // Intercept browser back button
         history.pushState(null, "", window.location.href);
         window.addEventListener("popstate", function() {
             showLeaveModal();
@@ -556,7 +555,6 @@
     </script>
 
     <script>
-        // Start elapsed timer when page loads
         let workoutSeconds = 0;
         const timerDisplay = document.getElementById("workout-timer");
 
@@ -564,12 +562,11 @@
             workoutSeconds++;
             const minutes = Math.floor(workoutSeconds / 60);
             const seconds = workoutSeconds % 60;
-            timerDisplay.textContent = 
-                (minutes < 10 ? "0" : "") + minutes + ":" + 
+            timerDisplay.textContent =
+                (minutes < 10 ? "0" : "") + minutes + ":" +
                 (seconds < 10 ? "0" : "") + seconds;
         }, 1000);
 
-        // Stop timer when Save Workout is clicked
         document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").addEventListener("submit", function() {
             clearInterval(workoutTimer);
         });

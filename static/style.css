@@ -15,6 +15,7 @@
   --text-secondary: #9a9a9a;  /* muted/gray text, labels */
   --border-color: #333333;
   --accent: #3b82f6;          /* electric blue — this is the one theme.js changes */
+  --superset-color: #f97316;  /* fixed orange for supersets — NOT tied to --accent, so it stays recognizable no matter what theme color the user picks */
   --danger: #ef4444;
   --danger-hover: #dc2626;
   --radius: 12px;
@@ -541,6 +542,7 @@ p {
 
 .drag-handle {
   color: var(--text-secondary);
+  cursor: grab;
 }
 
 .exercise-meta {
@@ -619,4 +621,506 @@ p {
 
 .form-section {
   margin-bottom: 28px;
+}
+
+/* ==============================================================
+   PICK DAY ROWS (pick_day.html)
+   ================================================================ */
+.pick-day-row {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pick-day-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.day-meta {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  margin-left: 10px;
+}
+
+/* ==============================================================
+   WORKOUT PREVIEW MODAL (pick_day.html)
+   ================================================================ */
+.preview-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+}
+
+.preview-modal {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-radius: 16px 16px 0 0;
+  padding: 24px;
+  z-index: 1000;
+  max-height: 85vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.preview-modal.open {
+  transform: translateY(0);
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.preview-split-name {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.85em;
+}
+
+.preview-day-name {
+  margin: 4px 0;
+}
+
+.preview-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stat-box {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+}
+
+.stat-divider {
+  border-left: 1px solid var(--border-color);
+}
+
+.exercise-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* :last-child targets only the final .exercise-row so it doesn't
+   get a trailing divider line under the last exercise */
+.exercise-row:last-child {
+  border-bottom: none;
+}
+
+.sets-reps {
+  color: var(--text-secondary);
+}
+
+.start-workout-btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin-top: 20px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.start-workout-btn:hover {
+  opacity: 0.9;
+}
+
+/* ==============================================================
+   PAGE HEADER + ELAPSED TIMER (log_day.html)
+   ================================================================ */
+.page-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.workout-timer {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+
+/* ==============================================================
+   UNIT TOGGLE + REST TIMER CONTROLS
+   ================================================================ */
+.control-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Hidden by default — toggleRestTimerOptions() in the JS switches
+   this to "block" when the checkbox is ticked */
+.rest-timer-options {
+  display: none;
+  margin-top: 10px;
+}
+
+.rest-duration-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-family: inherit;
+  margin-right: 6px;
+}
+
+.rest-duration-btn:hover {
+  border-color: var(--accent);
+}
+
+.text-input-sm {
+  width: 140px;
+}
+
+.selected-rest-duration {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+}
+
+.save-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* ==============================================================
+   EXERCISE BLOCKS
+   ================================================================ */
+.exercise-block {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.exercise-block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-block-header h3 {
+  flex: 1;
+  margin: 0;
+}
+
+.exercise-menu-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.3em;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.exercise-muscle-group {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  margin: 4px 0 12px;
+}
+
+/* ==============================================================
+   SET ROWS (weight/reps inputs)
+   ================================================================ */
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.set-label {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  width: 44px;
+}
+
+.set-input {
+  width: 90px;
+}
+
+.set-input-sm {
+  width: 70px;
+}
+
+.set-done-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-family: inherit;
+}
+
+.set-done-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Applied by JS when a set is marked complete */
+.set-done-btn.done {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.rest-countdown {
+  color: var(--accent);
+  font-size: 0.85em;
+  margin-left: 4px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.85em;
+}
+
+/* ==============================================================
+   SUPERSET BLOCKS
+   ==============================================================
+   Deliberately uses var(--superset-color) instead of var(--accent) —
+   see the note at the top of the file. Supersets should always
+   look orange, even if the user picks green or pink as their theme.
+   ================================================================ */
+.superset-block {
+  border-left: 3px solid var(--superset-color);
+  margin-left: 40px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 0 8px 8px 0;
+}
+
+.superset-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.superset-label {
+  color: var(--superset-color);
+  font-size: 0.85em;
+  font-weight: 600;
+  margin: 0;
+}
+
+.superset-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--danger);
+  font-size: 1em;
+  padding: 4px;
+}
+
+/* ==============================================================
+   EXERCISE OPTIONS MODAL + SUPERSET PICKER PANEL
+   ==============================================================
+   These share one dark .modal-overlay behind them (same pattern
+   as the calendar/preview modals, just no slide-up animation —
+   the JS for these just flips display:block/none directly).
+   ================================================================ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.exercise-modal {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  border-radius: 16px 16px 0 0;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.modal-eyebrow {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 2px 0 0;
+}
+
+.option-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+
+.option-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.option-list li:last-child {
+  border-bottom: none;
+}
+
+.option-sub {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+}
+
+.option-danger {
+  color: var(--danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  font-family: inherit;
+  padding: 0;
+}
+
+.superset-panel {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  border-radius: 16px 16px 0 0;
+  padding: 24px;
+  z-index: 1001;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.superset-exercise-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+
+.superset-exercise-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.superset-exercise-list li:hover {
+  color: var(--accent);
+}
+
+/* ==============================================================
+   LEAVE-WORKOUT MODAL
+   ==============================================================
+   This one gets a higher z-index (2000/2001) than everything
+   above (999–1001) so it always appears on top, even if the
+   exercise options modal happened to still be open underneath.
+   ================================================================ */
+.leave-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+}
+
+.leave-modal {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-radius: 16px 16px 0 0;
+  padding: 24px;
+  z-index: 2001;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.leave-modal-subtitle {
+  color: var(--text-secondary);
+  margin-top: 4px;
+  margin-bottom: 24px;
+}
+
+.leave-btn-discard {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: none;
+  border: 2px solid var(--danger);
+  border-radius: 30px;
+  color: var(--danger);
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.leave-btn-save {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: 30px;
+  color: #fff;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
 }
