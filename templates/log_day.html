@@ -55,6 +55,12 @@
                 </div>
                 <p class="exercise-muscle-group">{{ exercise.muscle_group }}</p>
 
+                <div class="set-header">
+                    <span>Set</span>
+                    <span class="unit-header">{{ last_unit }}</span>
+                    <span>Reps</span>
+                </div>
+
                 <div id="sets-{{ exercise.id }}">
                         {% for i in range(1, exercise.sets_count + 1) %}
                             <div class="set-row">
@@ -64,7 +70,7 @@
                                         class="text-input set-input weight-input"
                                         name="weight_{{ exercise.id }}_{{ i }}"
                                         value="{{ previous_data[exercise.id]['sets'][i-1]['weight'] }}"
-                                        placeholder="Weight ({{ last_unit }})"
+                                        placeholder="Weight"
                                         step="any">
                                     <input type="number"
                                         class="text-input set-input-sm"
@@ -75,14 +81,13 @@
                                     <input type="number"
                                         class="text-input set-input weight-input"
                                         name="weight_{{ exercise.id }}_{{ i }}"
-                                        placeholder="Weight ({{ last_unit }})"
+                                        placeholder="Weight"
                                         step="any">
                                     <input type="number"
                                         class="text-input set-input-sm"
                                         name="reps_{{ exercise.id }}_{{ i }}"
                                         placeholder="Reps">
                                 {% endif %}
-                                <span class="unit-label">{{ last_unit }}</span>
                                 <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
                                 <div class="rest-countdown"></div>
                             </div>
@@ -102,18 +107,24 @@
                                 </div>
                                 <h3>{{ ex2.name }}</h3>
                                 <p class="exercise-muscle-group">{{ ex2.muscle_group }}</p>
+                                <div class="set-header">
+                                    <span>Set</span>
+                                    <span class="unit-header">{{ last_unit }}</span>
+                                    <span>Reps</span>
+                                </div>
                                 <div id="sets-{{ ex2.id }}">
                                     {% for i in range(1, ex2.sets_count + 1) %}
                                         <div class="set-row">
                                             <label class="set-label">Set {{ i }}</label>
                                             {% if previous_data[ex2.id] and previous_data[ex2.id]["sets"]|length >= i %}
-                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['weight'] }}" placeholder="Weight ({{ last_unit }})" step="any">
+                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['weight'] }}" placeholder="Weight" step="any">
                                                 <input type="number" class="text-input set-input-sm" name="reps_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['reps'] }}" placeholder="Reps">
                                             {% else %}
-                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" placeholder="Weight ({{ last_unit }})" step="any">
+                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" placeholder="Weight" step="any">
                                                 <input type="number" class="text-input set-input-sm" name="reps_{{ ex2.id }}_{{ i }}" placeholder="Reps">
                                             {% endif %}
-                                            <span class="unit-label">{{ last_unit }}</span>
+                                            <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
+                                            <div class="rest-countdown"></div>
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -155,9 +166,9 @@
                 input.placeholder = "Weight (" + currentUnit + ")";
             });
 
-            const unitLabels = document.querySelectorAll(".unit-label");
-            unitLabels.forEach(function(label) {
-                label.textContent = currentUnit;
+            const unitHeaders = document.querySelectorAll(".unit-header");
+            unitHeaders.forEach(function(header) {
+                header.textContent = currentUnit;
             });
         }
 
@@ -172,9 +183,8 @@
             div.className = "set-row";
             div.innerHTML = `
                 <label class="set-label">Set ${count}</label>
-                <input type="number" class="text-input set-input weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="any">
+                <input type="number" class="text-input set-input weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight" step="any">
                 <input type="number" class="text-input set-input-sm" name="reps_${exerciseId}_${count}" placeholder="Reps">
-                <span class="unit-label">${currentUnit}</span>
                 <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
                 <div class="rest-countdown"></div>
             `;
@@ -278,12 +288,16 @@
                 </div>
                 <h3>${name}</h3>
                 <p class="exercise-muscle-group">${muscleGroup}</p>
+                <div class="set-header">
+                    <span>Set</span>
+                    <span class="unit-header">${currentUnit}</span>
+                    <span>Reps</span>
+                </div>
                 <div id="sets-${tempId}">
                     <div class="set-row">
                         <label class="set-label">Set 1</label>
-                        <input type="number" class="text-input set-input weight-input" name="weight_${tempId}_1" placeholder="Weight (${currentUnit})" step="any">
+                        <input type="number" class="text-input set-input weight-input" name="weight_${tempId}_1" placeholder="Weight" step="any">
                         <input type="number" class="text-input set-input-sm" name="reps_${tempId}_1" placeholder="Reps">
-                        <span class="unit-label">${currentUnit}</span>
                         <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
                         <div class="rest-countdown"></div>
                     </div>

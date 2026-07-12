@@ -881,6 +881,35 @@ p {
   width: 44px;
 }
 
+/* ==============================================================
+   SET COLUMN HEADERS (SET / LBS / REPS row above each exercise's sets)
+   ==============================================================
+   :nth-child(n) targets a child by its position — the 1st, 2nd,
+   and 3rd <span> here line up with the "Set" label, weight input,
+   and reps input widths below them, so the columns stay aligned.
+   ================================================================ */
+.set-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.set-header span:nth-child(1) {
+  width: 44px;
+  text-align: center;
+}
+
+.set-header span:nth-child(2),
+.set-header span:nth-child(3) {
+  flex: 1;
+  text-align: center;
+}
+
 .set-input {
   width: 90px;
 }
