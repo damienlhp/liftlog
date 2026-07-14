@@ -4,59 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Progress - LiftLog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
+    <script src="{{ url_for('static', filename='theme.js') }}"></script>
+    <a class="back-link" href="/">← Back to Home</a>
     <h1>My Progress</h1>
-    <a href="/">Back to Home</a>
 
     {% if charts %}
+        <script>
+            // Small helpers so every chart below can read the current
+            // theme colors instead of hardcoding them.
+            function getCssVar(name) {
+                return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+            }
+
+            // Chart.js wants "rgba(r, g, b, alpha)" for the fill under the
+            // line, but our theme color is a hex string like "#3b82f6" —
+            // this converts one to the other.
+            function hexToRgba(hex, alpha) {
+                hex = hex.replace('#', '');
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+        </script>
+
         {% for chart in charts %}
-            <div>
+            <div class="chart-card">
                 <h2>{{ chart.muscle_group }}</h2>
-                <canvas id="chart-{{ loop.index }}" width="600" height="300"></canvas>
+                <div class="chart-container">
+                    <canvas id="chart-{{ loop.index }}"></canvas>
+                </div>
                 <script>
-                    new Chart(document.getElementById("chart-{{ loop.index }}"), {
-                        type: "line",
-                        data: {
-                            labels: {{ chart.dates | tojson }},
-                            datasets: [{
-                                label: "Total Volume (lbs)",
-                                data: {{ chart.volumes | tojson }},
-                                borderColor: "#e84545",
-                                backgroundColor: "rgba(232, 69, 69, 0.1)",
-                                borderWidth: 2,
-                                tension: 0.3,
-                                fill: true
-                            }]
-                        },
-                        options: {
-                            responsive: false,
-                            plugins: {
-                                legend: { display: true }
+                    (function() {
+                        const accent = getCssVar('--accent');
+                        const textSecondary = getCssVar('--text-secondary');
+                        const textPrimary = getCssVar('--text-primary');
+                        const borderColor = getCssVar('--border-color');
+
+                        new Chart(document.getElementById("chart-{{ loop.index }}"), {
+                            type: "line",
+                            data: {
+                                labels: {{ chart.dates | tojson }},
+                                datasets: [{
+                                    label: "Total Volume",
+                                    data: {{ chart.volumes | tojson }},
+                                    borderColor: accent,
+                                    backgroundColor: hexToRgba(accent, 0.15),
+                                    borderWidth: 2,
+                                    tension: 0.3,
+                                    fill: true
+                                }]
                             },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    title: {
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
                                         display: true,
-                                        text: "Volume (lbs)"
+                                        labels: { color: textPrimary }
                                     }
                                 },
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: "Date"
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: "Volume",
+                                            color: textSecondary
+                                        },
+                                        ticks: { color: textSecondary },
+                                        grid: { color: borderColor }
+                                    },
+                                    x: {
+                                        title: {
+                                            display: true,
+                                            text: "Date",
+                                            color: textSecondary
+                                        },
+                                        ticks: { color: textSecondary },
+                                        grid: { color: borderColor }
                                     }
                                 }
                             }
-                        }
-                    });
+                        });
+                    })();
                 </script>
             </div>
         {% endfor %}
     {% else %}
-        <p>No workout data yet. Log some workouts first!</p>
+        <p class="empty-state">No workout data yet. Log some workouts first!</p>
     {% endif %}
 </body>
 </html>

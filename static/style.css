@@ -1153,3 +1153,30 @@ p {
   cursor: pointer;
   font-family: inherit;
 }
+
+/* ==============================================================
+   PROGRESS CHARTS (progress.html)
+   ================================================================ */
+.chart-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.chart-card h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.1em;
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Chart.js needs a sized container to know how big to draw itself.
+   width:100% + a fixed height lets it fill whatever screen it's on. */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+}
