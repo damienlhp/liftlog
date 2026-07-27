@@ -39,7 +39,7 @@
 
     <form action="/log/{{ split.id }}/{{ day.id }}" method="POST">
         <div class="save-bar">
-            <input type="date" name="date" class="text-input" required>
+            <input type="date" name="date" id="workout-date-input" class="text-input" required>
             <button type="submit" class="btn btn-primary">Save Workout</button>
         </div>
 
@@ -142,6 +142,22 @@
         <input type="hidden" name="unit" id="unit-input" value="{{ last_unit }}">
         <input type="hidden" name="duration_seconds" id="duration-seconds-input" value="0">
     </form>
+
+    <script>
+        // Default the date field to today so it's never accidentally
+        // left blank — the user can still change it if logging a
+        // past workout
+        (function() {
+            const dateInput = document.getElementById("workout-date-input");
+            if (!dateInput.value) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, "0");
+                const dd = String(today.getDate()).padStart(2, "0");
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+        })();
+    </script>
 
     <script>
         let currentUnit = "{{ last_unit }}";
@@ -560,7 +576,7 @@
 
         function saveAndExit() {
             hasUnsavedChanges = false;
-            document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").submit();
+            document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").requestSubmit();
         }
 
         history.pushState(null, "", window.location.href);
