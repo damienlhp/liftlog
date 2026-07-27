@@ -4,36 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ exercise.name }} — Progress</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
-    <a href="javascript:history.back()">← Back</a>
+    <script src="{{ url_for('static', filename='theme.js') }}"></script>
+    <a class="back-link" href="javascript:history.back()">← Back</a>
     <h1>{{ exercise.name }}</h1>
-    <p>{{ exercise.muscle_group }}</p>
+    <p class="exercise-muscle-group">{{ exercise.muscle_group }}</p>
 
-    <div>
-        <p>CURRENT MAX</p>
-        <h2>{{ current_max }}</h2>
-    </div>
-
-    <div>
-        <div>
-            <p>All-time Best</p>
-            <strong>{{ all_time_best }}</strong>
+    <div class="stat-card-row">
+        <div class="stat-card">
+            <p class="stat-eyebrow">Current Max</p>
+            <p class="stat-value">{{ current_max }}</p>
+        </div>
+        <div class="stat-card">
+            <p class="stat-eyebrow">All-time Best</p>
+            <p class="stat-value">{{ all_time_best }}</p>
         </div>
     </div>
 
     <!-- Tab buttons -->
-    <div>
-        <button onclick="showChart('strength')" id="tab-strength">Strength</button>
-        <button onclick="showChart('reps')" id="tab-reps">Reps</button>
-        <button onclick="showChart('volume')" id="tab-volume">Volume</button>
+    <div class="tab-bar">
+        <button class="tab-btn" onclick="showChart('strength')" id="tab-strength">Strength</button>
+        <button class="tab-btn" onclick="showChart('reps')" id="tab-reps">Reps</button>
+        <button class="tab-btn" onclick="showChart('volume')" id="tab-volume">Volume</button>
     </div>
 
     <!-- Charts -->
-    <div id="chart-strength"><canvas id="strengthChart"></canvas></div>
-    <div id="chart-reps" style="display:none"><canvas id="repsChart"></canvas></div>
-    <div id="chart-volume" style="display:none"><canvas id="volumeChart"></canvas></div>
+    <div id="chart-strength" class="chart-container"><canvas id="strengthChart"></canvas></div>
+    <div id="chart-reps" class="chart-container" style="display:none"><canvas id="repsChart"></canvas></div>
+    <div id="chart-volume" class="chart-container" style="display:none"><canvas id="volumeChart"></canvas></div>
 
     <script>
         const strengthDates = {{ strength_dates | tojson }};
@@ -45,6 +46,14 @@
     </script>
 
     <script>
+        function getCssVar(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        const textSecondary = getCssVar('--text-secondary');
+        const textPrimary = getCssVar('--text-primary');
+        const borderColor = getCssVar('--border-color');
+
         function makeChart(id, labels, data, label, color) {
             return new Chart(document.getElementById(id).getContext("2d"), {
                 type: "line",
@@ -62,8 +71,21 @@
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: false } }
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: { color: textSecondary },
+                            grid: { color: borderColor }
+                        },
+                        x: {
+                            ticks: { color: textSecondary },
+                            grid: { color: borderColor }
+                        }
+                    }
                 }
             });
         }
@@ -73,18 +95,12 @@
         makeChart("volumeChart", volumeDates, volumeValues, "Volume", "rgba(255, 159, 64, 1)");
 
         function showChart(type) {
-            document.getElementById("chart-strength").style.display = "none";
-            document.getElementById("chart-reps").style.display = "none";
-            document.getElementById("chart-volume").style.display = "none";
-            document.getElementById("chart-" + type).style.display = "block";
-
-            document.getElementById("tab-strength").style.fontWeight = "normal";
-            document.getElementById("tab-reps").style.fontWeight = "normal";
-            document.getElementById("tab-volume").style.fontWeight = "normal";
-            document.getElementById("tab-" + type).style.fontWeight = "bold";
+            ["strength", "reps", "volume"].forEach(function(t) {
+                document.getElementById("chart-" + t).style.display = (t === type) ? "block" : "none";
+                document.getElementById("tab-" + t).classList.toggle("active", t === type);
+            });
         }
 
-        // Start on strength tab
         showChart("strength");
     </script>
 </body>
