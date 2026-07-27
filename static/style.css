@@ -1233,3 +1233,23 @@ p {
   color: #fff;
   font-weight: 600;
 }
+
+/* ==============================================================
+   VERTICAL FORM LAYOUT (log_workout.html)
+   ==============================================================
+   Earlier forms (create_split, add_day_exercise) laid label +
+   input side by side in a row. This page stacks label ABOVE
+   input instead, so it needs its own label style plus a
+   full-width modifier for inputs that aren't inside a flex row
+   (where .text-input's flex:1 wouldn't apply on its own).
+   ================================================================ */
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+  font-size: 0.85em;
+}
+
+.w-full {
+  width: 100%;
+}
