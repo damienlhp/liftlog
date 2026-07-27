@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exercises - LiftLog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <script src="{{ url_for('static', filename='theme.js') }}"></script>
+    <a class="back-link" href="/">← Back to Home</a>
     <h1>Exercises</h1>
-    <a href="/">Back to Home</a>
 
     <h2>Add an Exercise</h2>
-    <form action="/add-exercise" method="POST">
-        <input type="text" name="name" placeholder="Exercise name" required>
-        <select name="muscle_group">
+    <form action="/add-exercise" method="POST" class="form-row">
+        <input type="text" name="name" class="text-input" placeholder="Exercise name" required>
+        <select name="muscle_group" class="select-input">
             <option value="Arms">Arms</option>
             <option value="Back">Back</option>
             <option value="Chest">Chest</option>
@@ -20,12 +22,14 @@
             <option value="Legs">Legs</option>
             <option value="Shoulders">Shoulders</option>
         </select>
-        <button type="submit">Add Exercise</button>
+        <button type="submit" class="btn btn-primary">Add Exercise</button>
     </form>
 
     <h2>All Exercises</h2>
-    {% for exercise in exercises %}
-        <p>{{ exercise.name }} - {{ exercise.muscle_group }}</p>
-    {% endfor %}
+    <ul class="simple-list">
+        {% for exercise in exercises %}
+            <li>{{ exercise.name }} <span class="exercise-meta">{{ exercise.muscle_group }}</span></li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
