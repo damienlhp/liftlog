@@ -140,6 +140,7 @@
         </div>
 
         <input type="hidden" name="unit" id="unit-input" value="{{ last_unit }}">
+        <input type="hidden" name="duration_seconds" id="duration-seconds-input" value="0">
     </form>
 
     <script>
@@ -580,6 +581,7 @@
             timerDisplay.textContent =
                 (minutes < 10 ? "0" : "") + minutes + ":" +
                 (seconds < 10 ? "0" : "") + seconds;
+            document.getElementById("duration-seconds-input").value = workoutSeconds;
         }, 1000);
 
         document.querySelector("form[action='/log/{{ split.id }}/{{ day.id }}']").addEventListener("submit", function() {

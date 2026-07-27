@@ -175,11 +175,12 @@ def log_workout():
 def save_workout():
     exercise_id = request.form["exercise_id"]
     date = request.form["date"]
+    duration_seconds = request.form.get("duration_seconds", 0)
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO workout_logs (exercise_id, date) VALUES (?, ?)",
-        (exercise_id, date)
+        "INSERT INTO workout_logs (exercise_id, date, duration_seconds) VALUES (?, ?, ?)",
+        (exercise_id, date, duration_seconds)
     )
     log_id = cursor.lastrowid
     set_number = 1
@@ -316,6 +317,7 @@ def log_day(split_id, day_id):
 @app.route("/log/<int:split_id>/<int:day_id>", methods=["POST"])
 def save_day_workout(split_id, day_id):
     date = request.form["date"]
+    duration_seconds = request.form.get("duration_seconds", 0)
     conn = get_db()
     cursor = conn.cursor()
 
@@ -358,8 +360,8 @@ def save_day_workout(split_id, day_id):
             continue  # skip exercises with no sets logged (shouldn't normally happen)
 
         cursor.execute(
-            "INSERT INTO workout_logs (exercise_id, date) VALUES (?, ?)",
-            (exercise_id, date)
+            "INSERT INTO workout_logs (exercise_id, date, duration_seconds) VALUES (?, ?, ?)",
+            (exercise_id, date, duration_seconds)
         )
         log_id = cursor.lastrowid
         set_number = 1

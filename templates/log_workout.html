@@ -9,7 +9,10 @@
 <body>
     <script src="{{ url_for('static', filename='theme.js') }}"></script>
     <a class="back-link" href="/">← Back to Home</a>
-    <h1>Log a Workout</h1>
+    <div class="page-header-row">
+        <h1>Log a Workout</h1>
+        <div id="workout-timer" class="workout-timer">00:00</div>
+    </div>
 
     <form action="/log-workout" method="POST">
         <div class="form-section">
@@ -40,6 +43,8 @@
             <button type="button" class="btn btn-secondary btn-sm" onclick="addSet()">+ Add Set</button>
             <button type="submit" class="btn btn-primary">Save Workout</button>
         </div>
+
+        <input type="hidden" name="duration_seconds" id="duration-seconds-input" value="0">
     </form>
 
     <script>
@@ -57,6 +62,27 @@
             `;
             container.appendChild(div);
         }
+    </script>
+
+    <script>
+        // Elapsed workout timer — starts counting the moment this page loads,
+        // same pattern as log_day.html
+        let workoutSeconds = 0;
+        const timerDisplay = document.getElementById("workout-timer");
+
+        const workoutTimer = setInterval(function() {
+            workoutSeconds++;
+            const minutes = Math.floor(workoutSeconds / 60);
+            const seconds = workoutSeconds % 60;
+            timerDisplay.textContent =
+                (minutes < 10 ? "0" : "") + minutes + ":" +
+                (seconds < 10 ? "0" : "") + seconds;
+            document.getElementById("duration-seconds-input").value = workoutSeconds;
+        }, 1000);
+
+        document.querySelector("form[action='/log-workout']").addEventListener("submit", function() {
+            clearInterval(workoutTimer);
+        });
     </script>
 </body>
 </html>
