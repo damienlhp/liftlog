@@ -16,7 +16,12 @@
     {% if days %}
         {% for day in days %}
             <div class="day-card">
-                <h3>Day {{ day.day_order }}: {{ day.day_name }}</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>Day {{ day.day_order }}: {{ day.day_name }}</h3>
+                    <form action="/split/{{ split.id }}/delete-day/{{ day.id }}" method="POST">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete Day {{ day.day_order }}: {{ day.day_name }}? This removes all exercises assigned to this day.')">Delete Day</button>
+                    </form>
+                </div>
                 <ul class="exercise-list sortable-list" data-split-id="{{ split.id }}">
                     {% for exercise in day.exercises %}
                         <li class="exercise-item" data-split-exercise-id="{{ exercise.split_exercise_id }}">
