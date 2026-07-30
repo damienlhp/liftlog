@@ -1119,6 +1119,10 @@ p {
   transition: transform 0.3s ease;
 }
 
+.leave-modal.open {
+  transform: translateY(0);
+}
+
 .leave-modal-subtitle {
   color: var(--text-secondary);
   margin-top: 4px;

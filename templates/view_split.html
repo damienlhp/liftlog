@@ -18,9 +18,10 @@
             <div class="day-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h3>Day {{ day.day_order }}: {{ day.day_name }}</h3>
-                    <form action="/split/{{ split.id }}/delete-day/{{ day.id }}" method="POST">
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete Day {{ day.day_order }}: {{ day.day_name }}? This removes all exercises assigned to this day.')">Delete Day</button>
-                    </form>
+                    <button type="button" class="btn btn-danger btn-sm"
+                        onclick="confirmDeleteDay('{{ split.id }}', '{{ day.id }}', '{{ day.day_order }}: {{ day.day_name }}')">
+                        Delete
+                    </button>
                 </div>
                 <ul class="exercise-list sortable-list" data-split-id="{{ split.id }}">
                     {% for exercise in day.exercises %}
@@ -50,6 +51,17 @@
         <button type="submit" class="btn btn-primary">Add Day</button>
     </form>
 
+    <!-- Delete day confirmation modal (reuses the leave-workout modal pattern) -->
+    <div id="delete-day-overlay" class="leave-overlay" onclick="closeDeleteDayModal()"></div>
+    <div id="delete-day-modal" class="leave-modal">
+        <h3 id="delete-day-title">Delete this day?</h3>
+        <p class="leave-modal-subtitle">This removes all exercises assigned to this day.</p>
+        <form id="delete-day-form" method="POST">
+            <button type="submit" class="leave-btn-discard">Delete Day</button>
+        </form>
+        <button type="button" class="leave-btn-save" onclick="closeDeleteDayModal()">Cancel</button>
+    </div>
+
     <script>
         document.querySelectorAll(".sortable-list").forEach(function(list) {
             new Sortable(list, {
@@ -69,6 +81,25 @@
                 }
             });
         });
+
+        function confirmDeleteDay(splitId, dayId, dayLabel) {
+            document.getElementById("delete-day-title").textContent = "Delete Day " + dayLabel + "?";
+            document.getElementById("delete-day-form").action = "/split/" + splitId + "/delete-day/" + dayId;
+
+            document.getElementById("delete-day-overlay").style.display = "block";
+            document.getElementById("delete-day-modal").style.display = "block";
+            setTimeout(function() {
+                document.getElementById("delete-day-modal").classList.add("open");
+            }, 10);
+        }
+
+        function closeDeleteDayModal() {
+            document.getElementById("delete-day-modal").classList.remove("open");
+            setTimeout(function() {
+                document.getElementById("delete-day-modal").style.display = "none";
+                document.getElementById("delete-day-overlay").style.display = "none";
+            }, 300);
+        }
     </script>
 </body>
 </html>
