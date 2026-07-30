@@ -466,6 +466,16 @@ def remove_exercise(split_id, day_id, split_exercise_id):
     conn.close()
     return redirect(url_for("view_split", split_id=split_id))
 
+@app.route("/split/<int:split_id>/delete-day/<int:day_id>", methods=["POST"])
+def delete_day(split_id, day_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM split_exercises WHERE split_day_id = ?", (day_id,))
+    cursor.execute("DELETE FROM split_days WHERE id = ?", (day_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("view_split", split_id=split_id))
+
 @app.route("/split/<int:split_id>/delete", methods=["POST"])
 def delete_split(split_id):
     conn = get_db()
