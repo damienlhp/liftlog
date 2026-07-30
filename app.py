@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 app = Flask(__name__)
 
@@ -649,10 +649,79 @@ def calendar_data():
             }
     
     conn.close()
-    from flask import jsonify
     return jsonify({
         "workout_dates": all_dates,
         "workout_details": workout_details
+    })
+
+@app.route("/workout-detail/<date>")
+def workout_detail(date):
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT workout_logs.id as log_id, workout_logs.duration_seconds,
+               exercises.id as exercise_id, exercises.name, exercises.muscle_group
+        FROM workout_logs
+        JOIN exercises ON workout_logs.exercise_id = exercises.id
+        WHERE workout_logs.date = ?
+        ORDER BY workout_logs.id
+    """, (date,))
+    logs = cursor.fetchall()
+
+    duration_seconds = 0
+    exercises_data = []
+    total_prs = 0
+
+    for log in logs:
+        duration_seconds = max(duration_seconds, log["duration_seconds"] or 0)
+
+        cursor.execute("""
+            SELECT set_number, weight, reps, unit
+            FROM sets
+            WHERE log_id = ?
+            ORDER BY set_number
+        """, (log["log_id"],))
+        sets = cursor.fetchall()
+
+        # best weight ever for this exercise on an earlier date
+        cursor.execute("""
+            SELECT MAX(sets.weight) as best_weight
+            FROM sets
+            JOIN workout_logs ON sets.log_id = workout_logs.id
+            WHERE workout_logs.exercise_id = ? AND workout_logs.date < ?
+        """, (log["exercise_id"], date))
+        prior_best_row = cursor.fetchone()
+        running_best = prior_best_row["best_weight"] if prior_best_row["best_weight"] is not None else 0
+
+        set_list = []
+        for s in sets:
+            is_pr = s["weight"] > running_best
+            if is_pr:
+                running_best = s["weight"]
+                total_prs += 1
+            set_list.append({
+                "set_number": s["set_number"],
+                "weight": s["weight"],
+                "reps": s["reps"],
+                "unit": s["unit"],
+                "is_pr": is_pr
+            })
+
+        exercises_data.append({
+            "name": log["name"],
+            "muscle_group": log["muscle_group"],
+            "sets": set_list
+        })
+
+    conn.close()
+
+    return jsonify({
+        "date": date,
+        "duration_seconds": duration_seconds,
+        "exercise_count": len(exercises_data),
+        "total_prs": total_prs,
+        "exercises": exercises_data
     })
 
 if __name__ == "__main__":

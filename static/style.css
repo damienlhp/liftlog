@@ -1253,3 +1253,55 @@ p {
 .w-full {
   width: 100%;
 }
+
+/* ==============================================================
+   WORKOUT DETAIL — PER-EXERCISE / PER-SET BREAKDOWN
+   ==============================================================
+   Session 20, Stage 2: the calendar day-detail panel now fetches
+   /workout-detail/<date> and renders a full exercise + set
+   breakdown (instead of just day_name/total_sets/exercise_count).
+   These rules style that expanded content, reusing the existing
+   .stat-card-row / .stat-card pattern from exercise_graph.html
+   for the Duration / Exercises / PRs row above the list.
+   ================================================================ */
+.detail-exercise-block {
+  margin-top: 16px;
+}
+
+.detail-exercise-block h4 {
+  margin: 0 0 6px;
+  font-size: 0.95em;
+}
+
+.detail-set-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9em;
+}
+
+.detail-set-row:last-child {
+  border-bottom: none;
+}
+
+/* PR sets get highlighted in the theme accent color, so it always
+   matches whatever color the user picked — not a fixed color like
+   the superset orange, since a PR isn't a fixed semantic category
+   the way a superset pairing is. */
+.detail-set-row.is-pr {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.pr-badge {
+  background: var(--accent);
+  color: var(--bg-primary);
+  font-size: 0.7em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}

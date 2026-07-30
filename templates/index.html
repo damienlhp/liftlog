@@ -71,11 +71,8 @@
             <h3 id="detail-date"></h3>
             <button onclick="closeDetailPanel()" class="detail-close">✕</button>
         </div>
-        <p class="detail-subtitle">1 workout logged</p>
-        <div id="detail-content" class="detail-content">
-            <p id="detail-day-name" class="detail-day-name"></p>
-            <p id="detail-stats" class="detail-stats"></p>
-        </div>
+        <p class="detail-subtitle" id="detail-subtitle"></p>
+        <div id="detail-content" class="detail-content"></div>
     </div>
 
     <!-- theme.js sets up the color picker above -->
@@ -87,6 +84,7 @@
         const twoWeeksAgo = "{{ two_weeks_ago }}";
         const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
         const monthNamesShort = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const dayNamesFull = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
         const dayHeaders = ["S","M","T","W","T","F","S"];
 
         // --- Mini calendar ---
@@ -205,28 +203,79 @@
                 }
 
                 body.appendChild(dayGrid);
-            }
+            }   
         }
 
-        // --- Workout detail panel ---
-        function openDetailPanel(dateStr) {
-            const details = allWorkoutDetails[dateStr];
-            if (!details) return;
+        // Step 1: click a date -> show the simple summary card (day name, sets, exercises)
+        function openDetailPanel(date) {
+            const details = allWorkoutDetails[date] || { day_name: "Workout", total_sets: 0, exercise_count: 0 };
+            const dateObj = new Date(date + "T00:00:00");
+            const formattedDate = dayNamesFull[dateObj.getDay()] + ", " + monthNames[dateObj.getMonth()] + " " + dateObj.getDate();
 
-            const date = new Date(dateStr + "T00:00:00");
-            const dayOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][date.getDay()];
-            const dateLabel = dayOfWeek + ", " + monthNames[date.getMonth()] + " " + date.getDate();
+            document.getElementById("detail-date").textContent = formattedDate;
+            document.getElementById("detail-subtitle").textContent = "1 workout logged";
 
-            document.getElementById("detail-date").textContent = dateLabel;
-            document.getElementById("detail-day-name").textContent = details.day_name;
-            document.getElementById("detail-stats").textContent =
-                details.total_sets + " sets · " + details.exercise_count + " exercises";
+            const content = document.getElementById("detail-content");
+            content.innerHTML = `
+                <div class="detail-content" onclick="showFullWorkoutDetail('${date}', '${details.day_name}')" style="cursor:pointer;">
+                    <p class="detail-day-name">${details.day_name}</p>
+                    <p class="detail-stats">${details.total_sets} sets · ${details.exercise_count} exercises</p>
+                </div>
+            `;
 
             document.getElementById("detail-overlay").style.display = "block";
             document.getElementById("detail-panel").style.display = "block";
             setTimeout(function() {
                 document.getElementById("detail-panel").classList.add("open");
             }, 10);
+        }
+
+        // Step 2: click the summary card -> fetch and show full duration/PR/exercise breakdown
+        function showFullWorkoutDetail(date, dayName) {
+            const content = document.getElementById("detail-content");
+            content.innerHTML = `<p>Loading...</p>`;
+
+            fetch(`/workout-detail/${date}`)
+                .then(res => res.json())
+                .then(data => {
+                    let exercisesHtml = data.exercises.map(ex => {
+                        let setsHtml = ex.sets.map(s => `
+                            <div class="detail-set-row ${s.is_pr ? 'is-pr' : ''}">
+                                <span>Set ${s.set_number}</span>
+                                <span>${s.weight} ${s.unit} × ${s.reps}</span>
+                                ${s.is_pr ? '<span class="pr-badge">PR</span>' : ''}
+                            </div>
+                        `).join("");
+
+                        return `
+                            <div class="detail-exercise-block">
+                                <h4>${ex.name} <span class="text-secondary">(${ex.muscle_group})</span></h4>
+                                ${setsHtml}
+                            </div>
+                        `;
+                    }).join("");
+
+                    let minutes = Math.floor(data.duration_seconds / 60);
+                    let seconds = String(data.duration_seconds % 60).padStart(2, "0");
+
+                    content.innerHTML = `
+                        <div class="stat-card-row">
+                            <div class="stat-card">
+                                <div class="stat-eyebrow">Duration</div>
+                                <div class="stat-value">${minutes}:${seconds}</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-eyebrow">Exercises</div>
+                                <div class="stat-value">${data.exercise_count}</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-eyebrow">PRs</div>
+                                <div class="stat-value">${data.total_prs}</div>
+                            </div>
+                        </div>
+                        ${exercisesHtml}
+                    `;
+                });
         }
 
         function closeDetailPanel() {
