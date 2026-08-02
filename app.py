@@ -436,7 +436,7 @@ def progress():
     for muscle_group in muscle_groups:
         cursor.execute("""
             SELECT workout_logs.date,
-                   SUM(sets.weight * sets.reps) as volume
+                   MAX(sets.weight) as max_weight
             FROM workout_logs
             JOIN exercises ON workout_logs.exercise_id = exercises.id
             JOIN sets ON sets.log_id = workout_logs.id
@@ -449,7 +449,7 @@ def progress():
             charts.append({
                 "muscle_group": muscle_group,
                 "dates": [row["date"] for row in rows],
-                "volumes": [row["volume"] for row in rows]
+                "max_weights": [row["max_weight"] for row in rows]
             })
     conn.close()
     return render_template("progress.html", charts=charts)

@@ -374,6 +374,8 @@ p {
   border-radius: 16px 16px 0 0;
   padding: 24px;
   z-index: 1002;
+  max-height: 85vh;
+  overflow-y: auto;
   transform: translateY(100%);
   transition: transform 0.3s ease;
 }
@@ -387,6 +389,10 @@ p {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary);
+  padding-bottom: 8px;
 }
 
 .detail-header h3 {
