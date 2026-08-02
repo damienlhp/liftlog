@@ -432,11 +432,13 @@ def progress():
     cursor = conn.cursor()
     cursor.execute("SELECT DISTINCT muscle_group FROM exercises ORDER BY muscle_group")
     muscle_groups = [row["muscle_group"] for row in cursor.fetchall()]
+
     charts = []
     for muscle_group in muscle_groups:
         cursor.execute("""
             SELECT workout_logs.date,
-                   MAX(sets.weight) as max_weight
+                   ROUND(AVG(sets.weight), 1) as avg_weight,
+                   ROUND(AVG(sets.reps), 1) as avg_reps
             FROM workout_logs
             JOIN exercises ON workout_logs.exercise_id = exercises.id
             JOIN sets ON sets.log_id = workout_logs.id
@@ -449,7 +451,8 @@ def progress():
             charts.append({
                 "muscle_group": muscle_group,
                 "dates": [row["date"] for row in rows],
-                "max_weights": [row["max_weight"] for row in rows]
+                "avg_weights": [row["avg_weight"] for row in rows],
+                "avg_reps": [row["avg_reps"] for row in rows]
             })
     conn.close()
     return render_template("progress.html", charts=charts)

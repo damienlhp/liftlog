@@ -14,15 +14,10 @@
 
     {% if charts %}
         <script>
-            // Small helpers so every chart below can read the current
-            // theme colors instead of hardcoding them.
             function getCssVar(name) {
                 return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
             }
 
-            // Chart.js wants "rgba(r, g, b, alpha)" for the fill under the
-            // line, but our theme color is a hex string like "#3b82f6" —
-            // this converts one to the other.
             function hexToRgba(hex, alpha) {
                 hex = hex.replace('#', '');
                 const r = parseInt(hex.substring(0, 2), 16);
@@ -41,6 +36,7 @@
                 <script>
                     (function() {
                         const accent = getCssVar('--accent');
+                        const superset = getCssVar('--superset-color');
                         const textSecondary = getCssVar('--text-secondary');
                         const textPrimary = getCssVar('--text-primary');
                         const borderColor = getCssVar('--border-color');
@@ -49,15 +45,29 @@
                             type: "line",
                             data: {
                                 labels: {{ chart.dates | tojson }},
-                                datasets: [{
-                                    label: "Total Volume",
-                                    data: {{ chart.volumes | tojson }},
-                                    borderColor: accent,
-                                    backgroundColor: hexToRgba(accent, 0.15),
-                                    borderWidth: 2,
-                                    tension: 0.3,
-                                    fill: true
-                                }]
+                                datasets: [
+                                    {
+                                        label: "Avg Weight",
+                                        data: {{ chart.avg_weights | tojson }},
+                                        borderColor: accent,
+                                        backgroundColor: hexToRgba(accent, 0.15),
+                                        borderWidth: 2,
+                                        tension: 0.3,
+                                        fill: true,
+                                        yAxisID: "y"
+                                    },
+                                    {
+                                        label: "Avg Reps",
+                                        data: {{ chart.avg_reps | tojson }},
+                                        borderColor: superset,
+                                        backgroundColor: "transparent",
+                                        borderWidth: 2,
+                                        borderDash: [5, 5],
+                                        tension: 0.3,
+                                        fill: false,
+                                        yAxisID: "y1"
+                                    }
+                                ]
                             },
                             options: {
                                 responsive: true,
@@ -70,21 +80,23 @@
                                 },
                                 scales: {
                                     y: {
+                                        type: "linear",
+                                        position: "left",
                                         beginAtZero: true,
-                                        title: {
-                                            display: true,
-                                            text: "Volume",
-                                            color: textSecondary
-                                        },
+                                        title: { display: true, text: "Weight", color: textSecondary },
                                         ticks: { color: textSecondary },
                                         grid: { color: borderColor }
                                     },
+                                    y1: {
+                                        type: "linear",
+                                        position: "right",
+                                        beginAtZero: true,
+                                        title: { display: true, text: "Reps", color: textSecondary },
+                                        ticks: { color: textSecondary },
+                                        grid: { drawOnChartArea: false }
+                                    },
                                     x: {
-                                        title: {
-                                            display: true,
-                                            text: "Date",
-                                            color: textSecondary
-                                        },
+                                        title: { display: true, text: "Date", color: textSecondary },
                                         ticks: { color: textSecondary },
                                         grid: { color: borderColor }
                                     }
