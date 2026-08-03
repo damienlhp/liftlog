@@ -948,10 +948,48 @@ p {
   color: #fff;
 }
 
+.set-options-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.1em;
+  padding: 4px 6px;
+}
+
+.set-options-btn:hover {
+  color: var(--text-primary);
+}
+
+/* Drop sets get a subtle left accent so they stand out from normal sets
+   without needing their own numbering scheme in the backend */
+.drop-set-row {
+  border-left: 2px solid var(--superset-color);
+  padding-left: 8px;
+}
+
 .rest-countdown {
   color: var(--accent);
   font-size: 0.85em;
   margin-left: 4px;
+}
+
+/* Small "..." button per set, opens the drop-set/delete-set panel */
+.set-menu-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 1em;
+  font-family: inherit;
+}
+
+.set-menu-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .btn-sm {

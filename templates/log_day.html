@@ -70,7 +70,7 @@
                                         class="text-input set-input weight-input"
                                         name="weight_{{ exercise.id }}_{{ i }}"
                                         value="{{ previous_data[exercise.id]['sets'][i-1]['weight'] }}"
-                                        placeholder="Weight"
+                                        placeholder="Weight ({{ last_unit }})"
                                         step="any">
                                     <input type="number"
                                         class="text-input set-input-sm"
@@ -81,7 +81,7 @@
                                     <input type="number"
                                         class="text-input set-input weight-input"
                                         name="weight_{{ exercise.id }}_{{ i }}"
-                                        placeholder="Weight"
+                                        placeholder="Weight ({{ last_unit }})"
                                         step="any">
                                     <input type="number"
                                         class="text-input set-input-sm"
@@ -89,6 +89,7 @@
                                         placeholder="Reps">
                                 {% endif %}
                                 <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
+                                <button type="button" class="set-options-btn" onclick="openSetMenu(this)">⋯</button>
                                 <div class="rest-countdown"></div>
                             </div>
                         {% endfor %}
@@ -117,13 +118,14 @@
                                         <div class="set-row">
                                             <label class="set-label">Set {{ i }}</label>
                                             {% if previous_data[ex2.id] and previous_data[ex2.id]["sets"]|length >= i %}
-                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['weight'] }}" placeholder="Weight" step="any">
+                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['weight'] }}" placeholder="Weight ({{ last_unit }})" step="any">
                                                 <input type="number" class="text-input set-input-sm" name="reps_{{ ex2.id }}_{{ i }}" value="{{ previous_data[ex2.id]['sets'][i-1]['reps'] }}" placeholder="Reps">
                                             {% else %}
-                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" placeholder="Weight" step="any">
+                                                <input type="number" class="text-input set-input weight-input" name="weight_{{ ex2.id }}_{{ i }}" placeholder="Weight ({{ last_unit }})" step="any">
                                                 <input type="number" class="text-input set-input-sm" name="reps_{{ ex2.id }}_{{ i }}" placeholder="Reps">
                                             {% endif %}
                                             <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
+                                            <button type="button" class="set-options-btn" onclick="openSetMenu(this)">⋯</button>
                                             <div class="rest-countdown"></div>
                                         </div>
                                     {% endfor %}
@@ -200,9 +202,10 @@
             div.className = "set-row";
             div.innerHTML = `
                 <label class="set-label">Set ${count}</label>
-                <input type="number" class="text-input set-input weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight" step="any">
+                <input type="number" class="text-input set-input weight-input" name="weight_${exerciseId}_${count}" placeholder="Weight (${currentUnit})" step="any">
                 <input type="number" class="text-input set-input-sm" name="reps_${exerciseId}_${count}" placeholder="Reps">
                 <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
+                <button type="button" class="set-options-btn" onclick="openSetMenu(this)">⋯</button>
                 <div class="rest-countdown"></div>
             `;
             container.appendChild(div);
@@ -234,6 +237,32 @@
 
     <!-- Dark overlay behind modal -->
     <div id="modal-overlay" class="modal-overlay" onclick="closeMenu()"></div>
+
+    <!-- Set options modal (Add Drop Set / Delete Set) -->
+    <div id="set-options-modal" class="exercise-modal">
+        <h3>Set Options</h3>
+        <p class="modal-eyebrow">SET OPTIONS</p>
+        <hr>
+        <ul class="option-list">
+            <li onclick="addDropSetFromMenu()">
+                ↘ Add Drop Set <span class="option-sub">— Insert a lighter set right after this one</span>
+            </li>
+            <li onclick="deleteSetFromMenu()">
+                <span class="option-danger">🗑️ Delete Set <span class="option-sub">— Remove this set</span></span>
+            </li>
+        </ul>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeSetMenu()" style="margin-top:10px;">Close</button>
+    </div>
+    <div id="set-options-overlay" class="modal-overlay" onclick="closeSetMenu()"></div>
+
+    <!-- Delete set confirmation (slide-up, replaces native confirm()) -->
+    <div id="delete-set-overlay" class="leave-overlay" onclick="closeDeleteSetModal()"></div>
+    <div id="delete-set-modal" class="leave-modal">
+        <h3>Delete this set?</h3>
+        <p class="leave-modal-subtitle">This can't be undone.</p>
+        <button onclick="confirmDeleteSet()" class="leave-btn-discard">Delete</button>
+        <button onclick="closeDeleteSetModal()" class="leave-btn-save">Cancel</button>
+    </div>
 
     <script>
         let currentExerciseId = null;
@@ -313,9 +342,10 @@
                 <div id="sets-${tempId}">
                     <div class="set-row">
                         <label class="set-label">Set 1</label>
-                        <input type="number" class="text-input set-input weight-input" name="weight_${tempId}_1" placeholder="Weight" step="any">
+                        <input type="number" class="text-input set-input weight-input" name="weight_${tempId}_1" placeholder="Weight (${currentUnit})" step="any">
                         <input type="number" class="text-input set-input-sm" name="reps_${tempId}_1" placeholder="Reps">
                         <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
+                        <button type="button" class="set-options-btn" onclick="openSetMenu(this)">⋯</button>
                         <div class="rest-countdown"></div>
                     </div>
                 </div>
@@ -361,6 +391,91 @@
                 parentBlock.appendChild(supersetWrapper);
             }
             hasUnsavedChanges = true;
+        }
+    </script>
+
+    <!-- Per-set options: renumbering keeps backend set_number sequence intact
+         no matter what order sets get added/removed in -->
+    <script>
+        let currentSetRow = null;
+
+        function openSetMenu(button) {
+            currentSetRow = button.closest(".set-row");
+            document.getElementById("set-options-modal").style.display = "block";
+            document.getElementById("set-options-overlay").style.display = "block";
+        }
+
+        function closeSetMenu() {
+            document.getElementById("set-options-modal").style.display = "none";
+            document.getElementById("set-options-overlay").style.display = "none";
+        }
+
+        function getExerciseIdFromRow(row) {
+            const container = row.closest("[id^='sets-']");
+            return container.id.replace("sets-", "");
+        }
+
+        // Re-labels and re-names every set row for one exercise so the
+        // backend always sees a contiguous weight_id_1, weight_id_2... —
+        // drop sets keep the "Drop Set" label but still get a real number
+        function renumberSets(exerciseId) {
+            const container = document.getElementById("sets-" + exerciseId);
+            const rows = container.querySelectorAll(".set-row");
+            rows.forEach(function(row, index) {
+                const num = index + 1;
+                const isDropSet = row.classList.contains("drop-set-row");
+                row.querySelector(".set-label").textContent = isDropSet ? "Drop Set" : "Set " + num;
+                const inputs = row.querySelectorAll("input[type='number']");
+                inputs[0].name = "weight_" + exerciseId + "_" + num;
+                inputs[1].name = "reps_" + exerciseId + "_" + num;
+            });
+            setCounts[exerciseId] = rows.length;
+        }
+
+        function deleteSetFromMenu() {
+            if (!currentSetRow) return;
+            closeSetMenu();
+            document.getElementById("delete-set-overlay").style.display = "block";
+            document.getElementById("delete-set-modal").style.display = "block";
+            setTimeout(function() {
+                document.getElementById("delete-set-modal").classList.add("open");
+            }, 10);
+        }
+
+        function closeDeleteSetModal() {
+            document.getElementById("delete-set-modal").classList.remove("open");
+            setTimeout(function() {
+                document.getElementById("delete-set-modal").style.display = "none";
+                document.getElementById("delete-set-overlay").style.display = "none";
+            }, 300);
+        }
+
+        function confirmDeleteSet() {
+            if (!currentSetRow) { closeDeleteSetModal(); return; }
+            const exerciseId = getExerciseIdFromRow(currentSetRow);
+            currentSetRow.remove();
+            renumberSets(exerciseId);
+            hasUnsavedChanges = true;
+            closeDeleteSetModal();
+        }
+
+        function addDropSetFromMenu() {
+            if (!currentSetRow) return;
+            const exerciseId = getExerciseIdFromRow(currentSetRow);
+            const div = document.createElement("div");
+            div.className = "set-row drop-set-row";
+            div.innerHTML = `
+                <label class="set-label">Drop Set</label>
+                <input type="number" class="text-input set-input weight-input" placeholder="Weight (${currentUnit})" step="any">
+                <input type="number" class="text-input set-input-sm" placeholder="Reps">
+                <button type="button" class="set-done-btn" onclick="markSetDone(this)">✓</button>
+                <button type="button" class="set-options-btn" onclick="openSetMenu(this)">⋯</button>
+                <div class="rest-countdown"></div>
+            `;
+            currentSetRow.insertAdjacentElement("afterend", div);
+            renumberSets(exerciseId);
+            hasUnsavedChanges = true;
+            closeSetMenu();
         }
     </script>
 
